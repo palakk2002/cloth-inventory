@@ -11,7 +11,11 @@ import {
     Settings,
     X,
     LogOut,
-    AlertCircle
+    AlertCircle,
+    Scissors,
+    Factory,
+    Store,
+    ShoppingCart
 } from 'lucide-react';
 
 const menuItems = [
@@ -19,6 +23,10 @@ const menuItems = [
     { icon: Tag, label: 'Categories', path: '/admin/categories' },
     { icon: Package, label: 'Products', path: '/admin/products' },
     { icon: Box, label: 'Stock Management', path: '/admin/stock' },
+    { icon: Scissors, label: 'Fabrics', path: '/admin/fabrics' },
+    { icon: Factory, label: 'Production', path: '/admin/production' },
+    { icon: Store, label: 'Shops', path: '/admin/shops' },
+    { icon: ShoppingCart, label: 'Sales', path: '/admin/sales' },
     { icon: Users, label: 'Staff', path: '/admin/staff' },
     { icon: BarChart3, label: 'Reports', path: '/admin/reports' },
 ];

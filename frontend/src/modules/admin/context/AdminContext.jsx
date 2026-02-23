@@ -40,7 +40,31 @@ const initialState = {
     staff: [
         { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Admin', status: 'Active' },
         { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Staff', status: 'Active' },
-    ]
+    ],
+
+    // ──── New State Slices ────
+    fabrics: [
+        { id: 1, name: 'Cotton White', totalMeter: 500, usedMeter: 120, pricePerMeter: 150 },
+        { id: 2, name: 'Silk Blue', totalMeter: 300, usedMeter: 80, pricePerMeter: 400 },
+        { id: 3, name: 'Denim Dark', totalMeter: 700, usedMeter: 250, pricePerMeter: 220 },
+    ],
+    fabricProducts: [
+        { id: 1, name: 'Cotton Kurta', fabricId: 1, meterPerPiece: 2.5, sellingPrice: 850, stock: 40 },
+        { id: 2, name: 'Silk Saree', fabricId: 2, meterPerPiece: 5.5, sellingPrice: 3200, stock: 15 },
+        { id: 3, name: 'Denim Jacket', fabricId: 3, meterPerPiece: 3, sellingPrice: 1800, stock: 25 },
+    ],
+    shops: [
+        { id: 1, name: 'Fashion Hub', owner: 'Rahul Sharma', contact: '9876543210', address: 'MG Road, Delhi' },
+        { id: 2, name: 'Style Point', owner: 'Priya Patel', contact: '9123456780', address: 'Station Rd, Mumbai' },
+    ],
+    sales: [
+        { id: 1, shopId: 1, fabricProductId: 1, quantity: 5, totalAmount: 4250, date: '2026-02-20' },
+        { id: 2, shopId: 2, fabricProductId: 3, quantity: 3, totalAmount: 5400, date: '2026-02-21' },
+    ],
+    productionLog: [
+        { id: 1, fabricProductId: 1, fabricId: 1, quantity: 10, meterUsed: 25, date: '2026-02-19' },
+        { id: 2, fabricProductId: 3, fabricId: 3, quantity: 5, meterUsed: 15, date: '2026-02-20' },
+    ],
 };
 
 function adminReducer(state, action) {
@@ -98,6 +122,63 @@ function adminReducer(state, action) {
             return { ...state, staff: state.staff.map(s => s.id === action.payload.id ? action.payload : s) };
         case 'DELETE_STAFF':
             return { ...state, staff: state.staff.filter(s => s.id !== action.payload) };
+
+        // ──── Fabrics ────
+        case 'ADD_FABRIC':
+            return { ...state, fabrics: [...state.fabrics, { ...action.payload, id: Date.now(), usedMeter: 0 }] };
+        case 'UPDATE_FABRIC':
+            return { ...state, fabrics: state.fabrics.map(f => f.id === action.payload.id ? action.payload : f) };
+        case 'DELETE_FABRIC':
+            return { ...state, fabrics: state.fabrics.filter(f => f.id !== action.payload) };
+
+        // ──── Fabric Products ────
+        case 'ADD_FABRIC_PRODUCT':
+            return { ...state, fabricProducts: [...state.fabricProducts, { ...action.payload, id: Date.now(), stock: 0 }] };
+        case 'UPDATE_FABRIC_PRODUCT':
+            return { ...state, fabricProducts: state.fabricProducts.map(p => p.id === action.payload.id ? action.payload : p) };
+        case 'DELETE_FABRIC_PRODUCT':
+            return { ...state, fabricProducts: state.fabricProducts.filter(p => p.id !== action.payload) };
+
+        // ──── Production ────
+        case 'PRODUCE': {
+            const { fabricProductId, fabricId, quantity, meterUsed } = action.payload;
+            return {
+                ...state,
+                fabrics: state.fabrics.map(f =>
+                    f.id === fabricId ? { ...f, usedMeter: f.usedMeter + meterUsed } : f
+                ),
+                fabricProducts: state.fabricProducts.map(p =>
+                    p.id === fabricProductId ? { ...p, stock: p.stock + quantity } : p
+                ),
+                productionLog: [
+                    { id: Date.now(), fabricProductId, fabricId, quantity, meterUsed, date: new Date().toISOString().split('T')[0] },
+                    ...state.productionLog
+                ]
+            };
+        }
+
+        // ──── Shops ────
+        case 'ADD_SHOP':
+            return { ...state, shops: [...state.shops, { ...action.payload, id: Date.now() }] };
+        case 'UPDATE_SHOP':
+            return { ...state, shops: state.shops.map(s => s.id === action.payload.id ? action.payload : s) };
+        case 'DELETE_SHOP':
+            return { ...state, shops: state.shops.filter(s => s.id !== action.payload) };
+
+        // ──── Sales ────
+        case 'ADD_SALE': {
+            const { fabricProductId: saleProductId, quantity: saleQty, totalAmount, shopId } = action.payload;
+            return {
+                ...state,
+                fabricProducts: state.fabricProducts.map(p =>
+                    p.id === saleProductId ? { ...p, stock: p.stock - saleQty } : p
+                ),
+                sales: [
+                    { id: Date.now(), shopId, fabricProductId: saleProductId, quantity: saleQty, totalAmount, date: new Date().toISOString().split('T')[0] },
+                    ...state.sales
+                ]
+            };
+        }
 
         default:
             return state;

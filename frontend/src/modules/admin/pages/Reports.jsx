@@ -50,6 +50,61 @@ export default function Reports() {
         { name: 'Sun', stockIn: 20, stockOut: 15 },
     ];
 
+    // ──── Fabric Usage Report Data ────
+    const fabricUsageData = state.fabrics.map(f => ({
+        ...f,
+        remaining: f.totalMeter - f.usedMeter,
+        usagePercent: f.totalMeter > 0 ? ((f.usedMeter / f.totalMeter) * 100).toFixed(1) : 0,
+    }));
+
+    // ──── Production Report Data ────
+    const productionReportData = state.fabricProducts.map(fp => {
+        const fabric = state.fabrics.find(f => f.id === fp.fabricId);
+        const totalProduced = state.productionLog
+            .filter(l => l.fabricProductId === fp.id)
+            .reduce((acc, l) => acc + l.quantity, 0);
+        const totalMeterUsed = state.productionLog
+            .filter(l => l.fabricProductId === fp.id)
+            .reduce((acc, l) => acc + l.meterUsed, 0);
+        return {
+            productName: fp.name,
+            fabricName: fabric?.name || '—',
+            meterPerPiece: fp.meterPerPiece,
+            totalProduced,
+            totalMeterUsed,
+            currentStock: fp.stock,
+        };
+    });
+
+    // ──── Shop-wise Sales Report ────
+    const shopSalesData = state.shops.map(shop => {
+        const shopSales = state.sales.filter(s => s.shopId === shop.id);
+        const totalQty = shopSales.reduce((acc, s) => acc + s.quantity, 0);
+        const totalAmount = shopSales.reduce((acc, s) => acc + s.totalAmount, 0);
+        return {
+            shopName: shop.name,
+            owner: shop.owner,
+            totalOrders: shopSales.length,
+            totalQty,
+            totalAmount,
+        };
+    });
+
+    // ──── Product-wise Sales Report ────
+    const productSalesData = state.fabricProducts.map(fp => {
+        const productSales = state.sales.filter(s => s.fabricProductId === fp.id);
+        const totalQty = productSales.reduce((acc, s) => acc + s.quantity, 0);
+        const totalAmount = productSales.reduce((acc, s) => acc + s.totalAmount, 0);
+        return {
+            productName: fp.name,
+            sellingPrice: fp.sellingPrice,
+            totalOrders: productSales.length,
+            totalQty,
+            totalAmount,
+            currentStock: fp.stock,
+        };
+    });
+
     return (
         <div className="space-y-8 pb-12">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -128,6 +183,7 @@ export default function Reports() {
                 </div>
             </div>
 
+            {/* Comprehensive Low Stock Report */}
             <div className="card overflow-hidden">
                 <div className="p-6 border-b border-border">
                     <h2 className="text-lg font-bold">Comprehensive Low Stock Report</h2>
@@ -169,6 +225,176 @@ export default function Reports() {
                                     <td colSpan="6" className="px-6 py-12 text-center text-muted-foreground font-medium">
                                         No items require attention. High inventory health! 🚀
                                     </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* ──── FABRIC USAGE REPORT ──── */}
+            <div className="card overflow-hidden">
+                <div className="p-6 border-b border-border">
+                    <h2 className="text-lg font-bold">Fabric Usage Report</h2>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-muted/50 border-b border-border">
+                            <tr>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fabric Name</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Meter</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Used Meter</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Remaining</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Usage %</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Value (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                            {fabricUsageData.map((f) => (
+                                <tr key={f.id} className="hover:bg-muted/30 transition-colors">
+                                    <td className="px-6 py-4 text-sm font-bold">{f.name}</td>
+                                    <td className="px-6 py-4 text-sm text-muted-foreground">{f.totalMeter} m</td>
+                                    <td className="px-6 py-4 text-sm text-muted-foreground">{f.usedMeter} m</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`text-sm font-bold ${f.remaining <= 50 ? 'text-red-600' : 'text-green-600'}`}>
+                                            {f.remaining} m
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-primary rounded-full"
+                                                    style={{ width: `${Math.min(f.usagePercent, 100)}%` }}
+                                                />
+                                            </div>
+                                            <span className="text-xs font-medium text-muted-foreground">{f.usagePercent}%</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm font-bold">₹{(f.remaining * f.pricePerMeter).toLocaleString()}</td>
+                                </tr>
+                            ))}
+                            {fabricUsageData.length === 0 && (
+                                <tr>
+                                    <td colSpan="6" className="px-6 py-12 text-center text-muted-foreground font-medium">No fabric data available.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* ──── PRODUCTION REPORT ──── */}
+            <div className="card overflow-hidden">
+                <div className="p-6 border-b border-border">
+                    <h2 className="text-lg font-bold">Product Production Report</h2>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-muted/50 border-b border-border">
+                            <tr>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Product</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Fabric</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Meter / Piece</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Produced</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Meter Used</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                            {productionReportData.map((item, i) => (
+                                <tr key={i} className="hover:bg-muted/30 transition-colors">
+                                    <td className="px-6 py-4 text-sm font-bold">{item.productName}</td>
+                                    <td className="px-6 py-4">
+                                        <span className="text-sm px-2 py-1 bg-primary/5 text-primary rounded-md font-medium">{item.fabricName}</span>
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-muted-foreground">{item.meterPerPiece} m</td>
+                                    <td className="px-6 py-4 text-sm font-bold">{item.totalProduced} pcs</td>
+                                    <td className="px-6 py-4 text-sm text-muted-foreground">{item.totalMeterUsed} m</td>
+                                    <td className="px-6 py-4 text-sm font-bold">{item.currentStock} pcs</td>
+                                </tr>
+                            ))}
+                            {productionReportData.length === 0 && (
+                                <tr>
+                                    <td colSpan="6" className="px-6 py-12 text-center text-muted-foreground font-medium">No production data available.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* ──── SHOP-WISE SALES REPORT ──── */}
+            <div className="card overflow-hidden">
+                <div className="p-6 border-b border-border">
+                    <h2 className="text-lg font-bold">Shop-wise Sales Report</h2>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-muted/50 border-b border-border">
+                            <tr>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Shop</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Owner</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Orders</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Qty Sold</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                            {shopSalesData.map((item, i) => (
+                                <tr key={i} className="hover:bg-muted/30 transition-colors">
+                                    <td className="px-6 py-4 text-sm font-bold">{item.shopName}</td>
+                                    <td className="px-6 py-4 text-sm text-muted-foreground">{item.owner}</td>
+                                    <td className="px-6 py-4 text-sm font-medium">{item.totalOrders}</td>
+                                    <td className="px-6 py-4 text-sm font-medium">{item.totalQty} pcs</td>
+                                    <td className="px-6 py-4 text-sm font-bold">₹{item.totalAmount.toLocaleString()}</td>
+                                </tr>
+                            ))}
+                            {shopSalesData.length === 0 && (
+                                <tr>
+                                    <td colSpan="5" className="px-6 py-12 text-center text-muted-foreground font-medium">No shop sales data available.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* ──── PRODUCT-WISE SALES REPORT ──── */}
+            <div className="card overflow-hidden">
+                <div className="p-6 border-b border-border">
+                    <h2 className="text-lg font-bold">Product-wise Sales Report</h2>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-muted/50 border-b border-border">
+                            <tr>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Product</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Unit Price</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Orders</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Qty Sold</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Revenue</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                            {productSalesData.map((item, i) => (
+                                <tr key={i} className="hover:bg-muted/30 transition-colors">
+                                    <td className="px-6 py-4 text-sm font-bold">{item.productName}</td>
+                                    <td className="px-6 py-4 text-sm font-medium">₹{item.sellingPrice}</td>
+                                    <td className="px-6 py-4 text-sm font-medium">{item.totalOrders}</td>
+                                    <td className="px-6 py-4 text-sm font-medium">{item.totalQty} pcs</td>
+                                    <td className="px-6 py-4 text-sm font-bold">₹{item.totalAmount.toLocaleString()}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`text-sm font-bold ${item.currentStock <= 5 ? 'text-red-600' : 'text-slate-900'}`}>
+                                            {item.currentStock} pcs
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
+                            {productSalesData.length === 0 && (
+                                <tr>
+                                    <td colSpan="6" className="px-6 py-12 text-center text-muted-foreground font-medium">No product sales data available.</td>
                                 </tr>
                             )}
                         </tbody>

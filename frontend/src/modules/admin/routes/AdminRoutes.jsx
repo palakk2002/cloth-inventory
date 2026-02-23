@@ -10,6 +10,10 @@ import Reports from '../pages/Reports';
 import Settings from '../pages/Settings';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import Fabrics from '../pages/Fabrics';
+import Production from '../pages/Production';
+import Shops from '../pages/Shops';
+import Sales from '../pages/Sales';
 
 export default function AdminRoutes() {
     return (
@@ -23,6 +27,10 @@ export default function AdminRoutes() {
                 <Route path="categories" element={<Categories />} />
                 <Route path="products" element={<Products />} />
                 <Route path="stock" element={<StockManagement />} />
+                <Route path="fabrics" element={<Fabrics />} />
+                <Route path="production" element={<Production />} />
+                <Route path="shops" element={<Shops />} />
+                <Route path="sales" element={<Sales />} />
                 <Route path="staff" element={<Staff />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="settings" element={<Settings />} />

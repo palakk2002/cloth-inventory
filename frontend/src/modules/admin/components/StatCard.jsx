@@ -7,7 +7,7 @@ export default function StatCard({ label, value, icon: Icon, trend, path, colorC
     return (
         <div
             onClick={() => path && navigate(path)}
-            className={`card p-6 flex items-center gap-4 transition-all duration-300 ${path ? 'cursor-pointer hover:-translate-y-1 hover:shadow-md' : ''}`}
+            className={`card p-6 flex items-center gap-4 h-full transition-all duration-300 ${path ? 'cursor-pointer hover:-translate-y-1 hover:shadow-md' : ''}`}
         >
             <div className={`w-12 h-12 rounded-xl ${colorClass} flex items-center justify-center shrink-0`}>
                 <Icon className="w-6 h-6" />

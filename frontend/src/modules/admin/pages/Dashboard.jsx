@@ -8,7 +8,11 @@ import {
     Tag,
     Users,
     AlertTriangle,
-    ChevronRight
+    ChevronRight,
+    Scissors,
+    Store,
+    ShoppingCart,
+    IndianRupee
 } from 'lucide-react';
 import {
     BarChart,
@@ -41,6 +45,12 @@ export default function Dashboard() {
 
     const lowStockCount = lowStockItems.length;
 
+    // New Module Stats
+    const totalFabrics = state.fabrics.length;
+    const totalFabricProductsStock = state.fabricProducts.reduce((acc, p) => acc + p.stock, 0);
+    const totalShops = state.shops.length;
+    const totalSalesValue = state.sales.reduce((acc, s) => acc + s.totalAmount, 0);
+
     // Chart Data
     const stockOverviewData = state.products.map(p => ({
         name: p.name,
@@ -56,18 +66,10 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Welcome Banner */}
-            <div className="relative overflow-hidden rounded-2xl bg-primary p-8 text-white shadow-lg">
-                <div className="relative z-10 max-w-2xl">
-                    <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome back, Palak! 👋</h1>
-                    <p className="text-white/80 leading-relaxed">
-                        Here's what's happening with your cloth inventory today. You have {lowStockCount} items running low on stock.
-                    </p>
-                </div>
-            </div>
 
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+            {/* Dashboard Stat Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-fr">
                 <StatCard
                     label="Total Products"
                     value={totalProducts}
@@ -96,6 +98,34 @@ export default function Dashboard() {
                     icon={AlertTriangle}
                     path="/admin/stock"
                     colorClass="bg-orange-100 text-orange-700"
+                />
+                <StatCard
+                    label="Total Fabrics"
+                    value={totalFabrics}
+                    icon={Scissors}
+                    path="/admin/fabrics"
+                    colorClass="bg-purple-100 text-purple-700"
+                />
+                <StatCard
+                    label="Fabric Products Stock"
+                    value={totalFabricProductsStock}
+                    icon={ShoppingCart}
+                    path="/admin/production"
+                    colorClass="bg-cyan-100 text-cyan-700"
+                />
+                <StatCard
+                    label="Total Shops"
+                    value={totalShops}
+                    icon={Store}
+                    path="/admin/shops"
+                    colorClass="bg-emerald-100 text-emerald-700"
+                />
+                <StatCard
+                    label="Total Sales Value"
+                    value={`₹${totalSalesValue.toLocaleString()}`}
+                    icon={IndianRupee}
+                    path="/admin/sales"
+                    colorClass="bg-amber-100 text-amber-700"
                 />
             </div>
 
