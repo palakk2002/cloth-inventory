@@ -15,7 +15,10 @@ import {
     Scissors,
     Factory,
     Store,
-    ShoppingCart
+    ShoppingCart,
+    UserCheck,
+    Receipt,
+    FileBarChart
 } from 'lucide-react';
 
 const menuItems = [
@@ -27,6 +30,7 @@ const menuItems = [
     { icon: Factory, label: 'Production', path: '/admin/production' },
     { icon: Store, label: 'Shops', path: '/admin/shops' },
     { icon: ShoppingCart, label: 'Sales', path: '/admin/sales' },
+    { icon: UserCheck, label: 'Customer Management', path: '/admin/customer-management' },
     { icon: Users, label: 'Staff', path: '/admin/staff' },
     { icon: BarChart3, label: 'Reports', path: '/admin/reports' },
 ];
@@ -59,7 +63,7 @@ export default function Sidebar({ isOpen, toggle }) {
                     </button>
                 </div>
 
-                <nav className="flex-1 px-4 py-4 space-y-1">
+                <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto custom-scrollbar">
                     {menuItems.map((item) => (
                         <NavLink
                             key={item.path}
@@ -76,28 +80,28 @@ export default function Sidebar({ isOpen, toggle }) {
                             <span className="font-medium">{item.label}</span>
                         </NavLink>
                     ))}
-                </nav>
 
-                <div className="p-4 border-t border-white/10">
-                    <NavLink
-                        to="/admin/settings"
-                        className={({ isActive }) => `
+                    <div className="pt-4 mt-4 border-t border-white/10">
+                        <NavLink
+                            to="/admin/settings"
+                            className={({ isActive }) => `
               flex items-center gap-3 px-4 py-3 rounded-lg transition-all
               ${isActive ? 'bg-white/15 text-white' : 'text-white/70 hover:bg-white/5 hover:text-white'}
             `}
-                    >
-                        <Settings className="w-5 h-5" />
-                        <span className="font-medium">Settings</span>
-                    </NavLink>
+                        >
+                            <Settings className="w-5 h-5" />
+                            <span className="font-medium">Settings</span>
+                        </NavLink>
 
-                    <button
-                        onClick={() => setIsLogoutModalOpen(true)}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-red-500/20 hover:text-red-400 transition-all mt-1"
-                    >
-                        <LogOut className="w-5 h-5" />
-                        <span className="font-medium">Logout</span>
-                    </button>
-                </div>
+                        <button
+                            onClick={() => setIsLogoutModalOpen(true)}
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-red-500/20 hover:text-red-400 transition-all mt-1"
+                        >
+                            <LogOut className="w-5 h-5" />
+                            <span className="font-medium">Logout</span>
+                        </button>
+                    </div>
+                </nav>
             </aside>
 
             {/* Logout Confirmation Modal */}

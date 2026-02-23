@@ -12,7 +12,8 @@ import {
     Scissors,
     Store,
     ShoppingCart,
-    IndianRupee
+    IndianRupee,
+    UserCheck
 } from 'lucide-react';
 import {
     BarChart,
@@ -126,6 +127,37 @@ export default function Dashboard() {
                     icon={IndianRupee}
                     path="/admin/sales"
                     colorClass="bg-amber-100 text-amber-700"
+                />
+                <StatCard
+                    label="Customer Management"
+                    value={state.customers.length}
+                    icon={Users}
+                    path="/admin/customer-management"
+                    colorClass="bg-violet-100 text-violet-700"
+                />
+                <StatCard
+                    label="Top Customer"
+                    value={state.customers.find(c => c.id === (state.customerPurchases.reduce((acc, p) => {
+                        acc[p.customerId] = (acc[p.customerId] || 0) + p.totalAmount;
+                        return acc;
+                    }, {}).entries ? Object.entries(state.customerPurchases.reduce((acc, p) => {
+                        acc[p.customerId] = (acc[p.customerId] || 0) + p.totalAmount;
+                        return acc;
+                    }, {})).sort((a, b) => b[1] - a[1])[0] : [null])[0])?.name || '—'}
+                    icon={UserCheck}
+                    colorClass="bg-rose-100 text-rose-700"
+                />
+                <StatCard
+                    label="Top Customer Product"
+                    value={state.fabricProducts.find(fp => fp.id === (state.customerPurchases.reduce((acc, p) => {
+                        acc[p.fabricProductId] = (acc[p.fabricProductId] || 0) + p.quantity;
+                        return acc;
+                    }, {}).entries ? Object.entries(state.customerPurchases.reduce((acc, p) => {
+                        acc[p.fabricProductId] = (acc[p.fabricProductId] || 0) + p.quantity;
+                        return acc;
+                    }, {})).sort((a, b) => b[1] - a[1])[0] : [null])[0])?.name || '—'}
+                    icon={Package}
+                    colorClass="bg-emerald-100 text-emerald-700"
                 />
             </div>
 

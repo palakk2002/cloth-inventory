@@ -65,6 +65,18 @@ const initialState = {
         { id: 1, fabricProductId: 1, fabricId: 1, quantity: 10, meterUsed: 25, date: '2026-02-19' },
         { id: 2, fabricProductId: 3, fabricId: 3, quantity: 5, meterUsed: 15, date: '2026-02-20' },
     ],
+
+    // ──── Customer Tracking ────
+    customers: [
+        { id: 1, name: 'Amit Kumar', contact: '9988776655', shopId: 1, address: 'Sector 15, Noida' },
+        { id: 2, name: 'Sneha Gupta', contact: '8877665544', shopId: 1, address: 'Lajpat Nagar, Delhi' },
+        { id: 3, name: 'Ravi Desai', contact: '7766554433', shopId: 2, address: 'Andheri West, Mumbai' },
+    ],
+    customerPurchases: [
+        { id: 1, customerId: 1, shopId: 1, fabricProductId: 1, quantity: 3, totalAmount: 2550, date: '2026-02-20' },
+        { id: 2, customerId: 2, shopId: 1, fabricProductId: 3, quantity: 2, totalAmount: 3600, date: '2026-02-21' },
+        { id: 3, customerId: 3, shopId: 2, fabricProductId: 2, quantity: 1, totalAmount: 3200, date: '2026-02-22' },
+    ],
 };
 
 function adminReducer(state, action) {
@@ -176,6 +188,29 @@ function adminReducer(state, action) {
                 sales: [
                     { id: Date.now(), shopId, fabricProductId: saleProductId, quantity: saleQty, totalAmount, date: new Date().toISOString().split('T')[0] },
                     ...state.sales
+                ]
+            };
+        }
+
+        // ──── Customers ────
+        case 'ADD_CUSTOMER':
+            return { ...state, customers: [...state.customers, { ...action.payload, id: Date.now() }] };
+        case 'UPDATE_CUSTOMER':
+            return { ...state, customers: state.customers.map(c => c.id === action.payload.id ? action.payload : c) };
+        case 'DELETE_CUSTOMER':
+            return { ...state, customers: state.customers.filter(c => c.id !== action.payload) };
+
+        // ──── Customer Purchases ────
+        case 'ADD_CUSTOMER_PURCHASE': {
+            const { fabricProductId: cpProductId, quantity: cpQty, totalAmount: cpAmount, customerId, shopId: cpShopId } = action.payload;
+            return {
+                ...state,
+                fabricProducts: state.fabricProducts.map(p =>
+                    p.id === cpProductId ? { ...p, stock: p.stock - cpQty } : p
+                ),
+                customerPurchases: [
+                    { id: Date.now(), customerId, shopId: cpShopId, fabricProductId: cpProductId, quantity: cpQty, totalAmount: cpAmount, date: new Date().toISOString().split('T')[0] },
+                    ...state.customerPurchases
                 ]
             };
         }

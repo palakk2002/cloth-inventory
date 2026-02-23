@@ -14,6 +14,7 @@ import Fabrics from '../pages/Fabrics';
 import Production from '../pages/Production';
 import Shops from '../pages/Shops';
 import Sales from '../pages/Sales';
+import CustomerManagement from '../pages/CustomerManagement';
 
 export default function AdminRoutes() {
     return (
@@ -31,6 +32,7 @@ export default function AdminRoutes() {
                 <Route path="production" element={<Production />} />
                 <Route path="shops" element={<Shops />} />
                 <Route path="sales" element={<Sales />} />
+                <Route path="customer-management" element={<CustomerManagement />} />
                 <Route path="staff" element={<Staff />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="settings" element={<Settings />} />
