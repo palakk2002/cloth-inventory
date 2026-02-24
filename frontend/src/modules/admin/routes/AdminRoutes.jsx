@@ -13,8 +13,12 @@ import Register from '../pages/Register';
 import Fabrics from '../pages/Fabrics';
 import Production from '../pages/Production';
 import Shops from '../pages/Shops';
-import Sales from '../pages/Sales';
+import Dispatch from '../pages/Dispatch';
+import SupplierOrders from '../pages/SupplierOrders';
 import CustomerManagement from '../pages/CustomerManagement';
+import SalesOverview from '../pages/SalesOverview';
+import ProductMaster from '../pages/ProductMaster';
+import BulkUpload from '../pages/BulkUpload';
 
 export default function AdminRoutes() {
     return (
@@ -29,9 +33,13 @@ export default function AdminRoutes() {
                 <Route path="products" element={<Products />} />
                 <Route path="stock" element={<StockManagement />} />
                 <Route path="fabrics" element={<Fabrics />} />
+                <Route path="supplier-orders" element={<SupplierOrders />} />
                 <Route path="production" element={<Production />} />
                 <Route path="shops" element={<Shops />} />
-                <Route path="sales" element={<Sales />} />
+                <Route path="dispatch" element={<Dispatch />} />
+                <Route path="sales-overview" element={<SalesOverview />} />
+                <Route path="product-master" element={<ProductMaster />} />
+                <Route path="bulk-upload" element={<BulkUpload />} />
                 <Route path="customer-management" element={<CustomerManagement />} />
                 <Route path="staff" element={<Staff />} />
                 <Route path="reports" element={<Reports />} />

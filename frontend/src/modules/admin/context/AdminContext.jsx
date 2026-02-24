@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { seedProductMaster } from '../../data/products';
 
 const AdminContext = createContext();
 
@@ -42,7 +43,7 @@ const initialState = {
         { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Staff', status: 'Active' },
     ],
 
-    // ──── New State Slices ────
+    // ──── Fabrics ────
     fabrics: [
         { id: 1, name: 'Cotton White', totalMeter: 500, usedMeter: 120, pricePerMeter: 150 },
         { id: 2, name: 'Silk Blue', totalMeter: 300, usedMeter: 80, pricePerMeter: 400 },
@@ -77,6 +78,113 @@ const initialState = {
         { id: 2, customerId: 2, shopId: 1, fabricProductId: 3, quantity: 2, totalAmount: 3600, date: '2026-02-21' },
         { id: 3, customerId: 3, shopId: 2, fabricProductId: 2, quantity: 1, totalAmount: 3200, date: '2026-02-22' },
     ],
+
+    // ──── Supplier Orders (Raw Cloth) ────
+    supplierOrders: [
+        {
+            id: 1, supplierName: 'Textile India Pvt', clothType: 'Cotton White', quantityOrdered: 200,
+            pricePerUnit: 150, totalAmount: 30000, orderDate: '2026-02-10', expectedDelivery: '2026-02-18',
+            quantityReceived: 200, status: 'Fully Received'
+        },
+        {
+            id: 2, supplierName: 'Silk World', clothType: 'Silk Blue', quantityOrdered: 100,
+            pricePerUnit: 400, totalAmount: 40000, orderDate: '2026-02-15', expectedDelivery: '2026-02-22',
+            quantityReceived: 60, status: 'Partially Received'
+        },
+        {
+            id: 3, supplierName: 'Denim House', clothType: 'Denim Dark', quantityOrdered: 300,
+            pricePerUnit: 220, totalAmount: 66000, orderDate: '2026-02-20', expectedDelivery: '2026-02-28',
+            quantityReceived: 0, status: 'Pending'
+        },
+    ],
+
+    // ──── Dispatches (Admin → Shops) ────
+    dispatches: [
+        {
+            id: 1, shopId: 1, fabricProductId: 1, productName: 'Cotton Kurta', shopName: 'Fashion Hub',
+            quantitySent: 15, quantityReceived: 15, dispatchDate: '2026-02-20', status: 'Delivered'
+        },
+        {
+            id: 2, shopId: 1, fabricProductId: 3, productName: 'Denim Jacket', shopName: 'Fashion Hub',
+            quantitySent: 10, quantityReceived: 0, dispatchDate: '2026-02-22', status: 'Pending'
+        },
+        {
+            id: 3, shopId: 2, fabricProductId: 2, productName: 'Silk Saree', shopName: 'Style Point',
+            quantitySent: 8, quantityReceived: 5, dispatchDate: '2026-02-21', status: 'Partially Delivered'
+        },
+    ],
+
+    // ──── Shop Stock (per shop × per product) ────
+    shopStock: [
+        { id: 1, shopId: 1, fabricProductId: 1, productName: 'Cotton Kurta', currentStock: 12, sellingPrice: 850, lowStockThreshold: 5 },
+        { id: 2, shopId: 1, fabricProductId: 3, productName: 'Denim Jacket', currentStock: 5, sellingPrice: 1800, lowStockThreshold: 3 },
+        { id: 3, shopId: 2, fabricProductId: 2, productName: 'Silk Saree', currentStock: 5, sellingPrice: 3200, lowStockThreshold: 3 },
+        { id: 4, shopId: 2, fabricProductId: 1, productName: 'Cotton Kurta', currentStock: 8, sellingPrice: 850, lowStockThreshold: 5 },
+    ],
+
+    // ──── Store Bills (from shop billing) ────
+    storeBills: [
+        {
+            id: 1, billId: 'BILL-2026-0001', shopId: 1, shopName: 'Fashion Hub',
+            customerName: 'Amit Kumar', customerPhone: '9988776655',
+            items: [{ fabricProductId: 1, productName: 'Cotton Kurta', quantity: 3, pricePerUnit: 850, total: 2550 }],
+            subtotal: 2550, gst: 127.5, discount: 0, totalAmount: 2677.5,
+            date: '2026-02-22', time: '10:30 AM',
+            paymentMethod: 'cash', paymentStatus: 'Paid', transactionId: null
+        },
+        {
+            id: 2, billId: 'BILL-2026-0002', shopId: 1, shopName: 'Fashion Hub',
+            customerName: 'Sneha Gupta', customerPhone: '8877665544',
+            items: [
+                { fabricProductId: 3, productName: 'Denim Jacket', quantity: 1, pricePerUnit: 1800, total: 1800 },
+                { fabricProductId: 1, productName: 'Cotton Kurta', quantity: 2, pricePerUnit: 850, total: 1700 },
+            ],
+            subtotal: 3500, gst: 175, discount: 200, totalAmount: 3475,
+            date: '2026-02-23', time: '02:15 PM',
+            paymentMethod: 'upi', paymentStatus: 'Paid', transactionId: 'UPI-TXN-9384756'
+        },
+        {
+            id: 3, billId: 'BILL-2026-0003', shopId: 1, shopName: 'Fashion Hub',
+            customerName: 'Walk-in Customer', customerPhone: '',
+            items: [{ fabricProductId: 1, productName: 'Cotton Kurta', quantity: 1, pricePerUnit: 850, total: 850 }],
+            subtotal: 850, gst: 42.5, discount: 0, totalAmount: 892.5,
+            date: '2026-02-24', time: '11:45 AM',
+            paymentMethod: 'cash', paymentStatus: 'Paid', transactionId: null
+        },
+        {
+            id: 4, billId: 'BILL-2026-0004', shopId: 2, shopName: 'Style Point',
+            customerName: 'Ravi Desai', customerPhone: '7766554433',
+            items: [{ fabricProductId: 2, productName: 'Silk Saree', quantity: 2, pricePerUnit: 3200, total: 6400 }],
+            subtotal: 6400, gst: 320, discount: 500, totalAmount: 6220,
+            date: '2026-02-23', time: '04:00 PM',
+            paymentMethod: 'card', paymentStatus: 'Paid', transactionId: 'CARD-TXN-1029384'
+        },
+        {
+            id: 5, billId: 'BILL-2026-0005', shopId: 2, shopName: 'Style Point',
+            customerName: 'Pooja Mehta', customerPhone: '9090909090',
+            items: [
+                { fabricProductId: 1, productName: 'Cotton Kurta', quantity: 4, pricePerUnit: 850, total: 3400 },
+                { fabricProductId: 2, productName: 'Silk Saree', quantity: 1, pricePerUnit: 3200, total: 3200 },
+            ],
+            subtotal: 6600, gst: 330, discount: 300, totalAmount: 6630,
+            date: '2026-02-24', time: '12:30 PM',
+            paymentMethod: 'upi', paymentStatus: 'Paid', transactionId: 'UPI-TXN-5678901'
+        },
+    ],
+
+    // ──── Product Master (Master Inventory with SKUs) ────
+    productMaster: seedProductMaster,
+    skuCounter: seedProductMaster.length + 1,
+};
+
+// Helper: Generate SKU
+// Format: CAT-BRAND-SIZE-AUTONUMBER
+export const generateSKU = (category, brand, size, counter) => {
+    const cat = category.substring(0, 2).toUpperCase();
+    const br = brand.substring(0, 3).toUpperCase();
+    const sz = size.toString().toUpperCase();
+    const num = counter.toString().padStart(5, '0');
+    return `${cat}-${br}-${sz}-${num}`;
 };
 
 function adminReducer(state, action) {
@@ -177,7 +285,7 @@ function adminReducer(state, action) {
         case 'DELETE_SHOP':
             return { ...state, shops: state.shops.filter(s => s.id !== action.payload) };
 
-        // ──── Sales ────
+        // ──── Sales (kept for backward compat) ────
         case 'ADD_SALE': {
             const { fabricProductId: saleProductId, quantity: saleQty, totalAmount, shopId } = action.payload;
             return {
@@ -185,12 +293,32 @@ function adminReducer(state, action) {
                 fabricProducts: state.fabricProducts.map(p =>
                     p.id === saleProductId ? { ...p, stock: p.stock - saleQty } : p
                 ),
+                storeBills: [action.payload, ...state.storeBills],
                 sales: [
                     { id: Date.now(), shopId, fabricProductId: saleProductId, quantity: saleQty, totalAmount, date: new Date().toISOString().split('T')[0] },
                     ...state.sales
                 ]
             };
         }
+
+        // ──── Product Master Management ────
+        case 'ADD_MASTER_PRODUCT':
+            return {
+                ...state,
+                productMaster: [action.payload, ...state.productMaster],
+                skuCounter: state.skuCounter + 1
+            };
+        case 'BULK_ADD_MASTER_PRODUCTS':
+            return {
+                ...state,
+                productMaster: [...action.payload, ...state.productMaster],
+                skuCounter: state.skuCounter + action.payload.length
+            };
+        case 'DELETE_MASTER_PRODUCT':
+            return {
+                ...state,
+                productMaster: state.productMaster.filter(p => p.id !== action.payload)
+            };
 
         // ──── Customers ────
         case 'ADD_CUSTOMER':
@@ -211,6 +339,129 @@ function adminReducer(state, action) {
                 customerPurchases: [
                     { id: Date.now(), customerId, shopId: cpShopId, fabricProductId: cpProductId, quantity: cpQty, totalAmount: cpAmount, date: new Date().toISOString().split('T')[0] },
                     ...state.customerPurchases
+                ]
+            };
+        }
+
+        // ──── Supplier Orders ────
+        case 'ADD_SUPPLIER_ORDER':
+            return {
+                ...state,
+                supplierOrders: [
+                    ...state.supplierOrders,
+                    { ...action.payload, id: Date.now(), quantityReceived: 0, status: 'Pending' }
+                ]
+            };
+
+        case 'RECEIVE_SUPPLIER_ORDER': {
+            const { orderId, receivedQty } = action.payload;
+            return {
+                ...state,
+                supplierOrders: state.supplierOrders.map(o => {
+                    if (o.id !== orderId) return o;
+                    const newReceived = o.quantityReceived + receivedQty;
+                    let status = 'Pending';
+                    if (newReceived >= o.quantityOrdered) status = 'Fully Received';
+                    else if (newReceived > 0) status = 'Partially Received';
+                    return { ...o, quantityReceived: newReceived, status };
+                }),
+                // Also update fabric totalMeter if matching cloth type
+                fabrics: state.fabrics.map(f => {
+                    const order = state.supplierOrders.find(o => o.id === orderId);
+                    if (order && f.name === order.clothType) {
+                        return { ...f, totalMeter: f.totalMeter + receivedQty };
+                    }
+                    return f;
+                })
+            };
+        }
+
+        // ──── Dispatches ────
+        case 'ADD_DISPATCH': {
+            const { shopId: dShopId, fabricProductId: dProductId, quantitySent } = action.payload;
+            const shop = state.shops.find(s => s.id === dShopId);
+            const product = state.fabricProducts.find(p => p.id === dProductId);
+            return {
+                ...state,
+                fabricProducts: state.fabricProducts.map(p =>
+                    p.id === dProductId ? { ...p, stock: p.stock - quantitySent } : p
+                ),
+                dispatches: [
+                    ...state.dispatches,
+                    {
+                        id: Date.now(), shopId: dShopId, fabricProductId: dProductId,
+                        productName: product?.name || '', shopName: shop?.name || '',
+                        quantitySent, quantityReceived: 0,
+                        dispatchDate: new Date().toISOString().split('T')[0],
+                        status: 'Pending'
+                    }
+                ]
+            };
+        }
+
+        // ──── Store Receives Dispatch ────
+        case 'RECEIVE_DISPATCH': {
+            const { dispatchId, receivedQty } = action.payload;
+            const dispatch = state.dispatches.find(d => d.id === dispatchId);
+            if (!dispatch) return state;
+
+            const newReceived = dispatch.quantityReceived + receivedQty;
+            let dStatus = 'Pending';
+            if (newReceived >= dispatch.quantitySent) dStatus = 'Delivered';
+            else if (newReceived > 0) dStatus = 'Partially Delivered';
+
+            // Update or create shopStock entry
+            const existingStock = state.shopStock.find(
+                s => s.shopId === dispatch.shopId && s.fabricProductId === dispatch.fabricProductId
+            );
+            const product = state.fabricProducts.find(p => p.id === dispatch.fabricProductId);
+
+            let updatedShopStock;
+            if (existingStock) {
+                updatedShopStock = state.shopStock.map(s =>
+                    s.id === existingStock.id
+                        ? { ...s, currentStock: s.currentStock + receivedQty }
+                        : s
+                );
+            } else {
+                updatedShopStock = [
+                    ...state.shopStock,
+                    {
+                        id: Date.now(), shopId: dispatch.shopId, fabricProductId: dispatch.fabricProductId,
+                        productName: product?.name || dispatch.productName,
+                        currentStock: receivedQty, sellingPrice: product?.sellingPrice || 0
+                    }
+                ];
+            }
+
+            return {
+                ...state,
+                dispatches: state.dispatches.map(d =>
+                    d.id === dispatchId ? { ...d, quantityReceived: newReceived, status: dStatus } : d
+                ),
+                shopStock: updatedShopStock
+            };
+        }
+
+        // ──── Store Billing ────
+        case 'ADD_STORE_BILL': {
+            const { shopId: bShopId, items: billItems } = action.payload;
+            // Deduct stock for each item
+            let updatedStock = [...state.shopStock];
+            billItems.forEach(item => {
+                updatedStock = updatedStock.map(s =>
+                    s.shopId === bShopId && s.fabricProductId === item.fabricProductId
+                        ? { ...s, currentStock: Math.max(0, s.currentStock - item.quantity) }
+                        : s
+                );
+            });
+
+            return {
+                ...state,
+                shopStock: updatedStock,
+                storeBills: [
+                    ...state.storeBills,
+                    { ...action.payload, id: Date.now() }
                 ]
             };
         }

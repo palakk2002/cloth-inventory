@@ -112,7 +112,7 @@ export default function CustomerManagement() {
             </div>
 
             {/* Section 1: Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <StatCard
                     label="Total Customers"
                     value={analytics.totalCustomers}
@@ -130,18 +130,6 @@ export default function CustomerManagement() {
                     value={`₹${analytics.totalRevenue.toLocaleString()}`}
                     icon={IndianRupee}
                     colorClass="bg-emerald-100 text-emerald-700"
-                />
-                <StatCard
-                    label="Top Customer"
-                    value={analytics.topCustomerName}
-                    icon={UserCheck}
-                    colorClass="bg-purple-100 text-purple-700"
-                />
-                <StatCard
-                    label="Top Product"
-                    value={analytics.topProductName}
-                    icon={Package}
-                    colorClass="bg-orange-100 text-orange-700"
                 />
             </div>
 

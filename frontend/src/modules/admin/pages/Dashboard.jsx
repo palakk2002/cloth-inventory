@@ -13,7 +13,11 @@ import {
     Store,
     ShoppingCart,
     IndianRupee,
-    UserCheck
+    UserCheck,
+    Send,
+    Truck,
+    CheckCircle2,
+    Clock,
 } from 'lucide-react';
 import {
     BarChart,
@@ -46,11 +50,18 @@ export default function Dashboard() {
 
     const lowStockCount = lowStockItems.length;
 
-    // New Module Stats
+    // Existing Module Stats
     const totalFabrics = state.fabrics.length;
     const totalFabricProductsStock = state.fabricProducts.reduce((acc, p) => acc + p.stock, 0);
     const totalShops = state.shops.length;
-    const totalSalesValue = state.sales.reduce((acc, s) => acc + s.totalAmount, 0);
+
+    // Dispatch Stats
+    const totalDispatched = state.dispatches.reduce((a, d) => a + d.quantitySent, 0);
+    const totalDelivered = state.dispatches.filter(d => d.status === 'Delivered').length;
+    const pendingDeliveries = state.dispatches.filter(d => d.status === 'Pending').length;
+
+    // Revenue from store bills
+    const totalRevenue = state.storeBills.reduce((a, b) => a + b.totalAmount, 0);
 
     // Chart Data
     const stockOverviewData = state.products.map(p => ({
@@ -65,9 +76,18 @@ export default function Dashboard() {
 
     const COLORS = ['#1E3A56', '#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE'];
 
+    // Shop-wise stock
+    const shopStockData = state.shops.map(shop => {
+        const stockItems = state.shopStock.filter(s => s.shopId === shop.id);
+        const totalStock = stockItems.reduce((a, s) => a + s.currentStock, 0);
+        const shopBills = state.storeBills.filter(b => b.shopId === shop.id);
+        const shopRevenue = shopBills.reduce((a, b) => a + b.totalAmount, 0);
+        const shopSalesCount = shopBills.length;
+        return { ...shop, totalStock, shopRevenue, shopSalesCount };
+    });
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-
 
             {/* Dashboard Stat Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-fr">
@@ -108,7 +128,7 @@ export default function Dashboard() {
                     colorClass="bg-purple-100 text-purple-700"
                 />
                 <StatCard
-                    label="Fabric Products Stock"
+                    label="Factory Stock"
                     value={totalFabricProductsStock}
                     icon={ShoppingCart}
                     path="/admin/production"
@@ -122,42 +142,38 @@ export default function Dashboard() {
                     colorClass="bg-emerald-100 text-emerald-700"
                 />
                 <StatCard
-                    label="Total Sales Value"
-                    value={`₹${totalSalesValue.toLocaleString()}`}
+                    label="Total Revenue"
+                    value={`₹${totalRevenue.toLocaleString()}`}
                     icon={IndianRupee}
-                    path="/admin/sales"
                     colorClass="bg-amber-100 text-amber-700"
                 />
                 <StatCard
-                    label="Customer Management"
-                    value={state.customers.length}
-                    icon={Users}
-                    path="/admin/customer-management"
+                    label="Total Dispatched"
+                    value={`${totalDispatched} pcs`}
+                    icon={Send}
+                    path="/admin/dispatch"
+                    colorClass="bg-teal-100 text-teal-700"
+                />
+                <StatCard
+                    label="Delivered"
+                    value={totalDelivered}
+                    icon={CheckCircle2}
+                    path="/admin/dispatch"
+                    colorClass="bg-green-100 text-green-700"
+                />
+                <StatCard
+                    label="Pending Deliveries"
+                    value={pendingDeliveries}
+                    icon={Clock}
+                    path="/admin/dispatch"
+                    colorClass="bg-red-100 text-red-700"
+                />
+                <StatCard
+                    label="Supplier Orders"
+                    value={state.supplierOrders.length}
+                    icon={Truck}
+                    path="/admin/supplier-orders"
                     colorClass="bg-violet-100 text-violet-700"
-                />
-                <StatCard
-                    label="Top Customer"
-                    value={state.customers.find(c => c.id === (state.customerPurchases.reduce((acc, p) => {
-                        acc[p.customerId] = (acc[p.customerId] || 0) + p.totalAmount;
-                        return acc;
-                    }, {}).entries ? Object.entries(state.customerPurchases.reduce((acc, p) => {
-                        acc[p.customerId] = (acc[p.customerId] || 0) + p.totalAmount;
-                        return acc;
-                    }, {})).sort((a, b) => b[1] - a[1])[0] : [null])[0])?.name || '—'}
-                    icon={UserCheck}
-                    colorClass="bg-rose-100 text-rose-700"
-                />
-                <StatCard
-                    label="Top Customer Product"
-                    value={state.fabricProducts.find(fp => fp.id === (state.customerPurchases.reduce((acc, p) => {
-                        acc[p.fabricProductId] = (acc[p.fabricProductId] || 0) + p.quantity;
-                        return acc;
-                    }, {}).entries ? Object.entries(state.customerPurchases.reduce((acc, p) => {
-                        acc[p.fabricProductId] = (acc[p.fabricProductId] || 0) + p.quantity;
-                        return acc;
-                    }, {})).sort((a, b) => b[1] - a[1])[0] : [null])[0])?.name || '—'}
-                    icon={Package}
-                    colorClass="bg-emerald-100 text-emerald-700"
                 />
             </div>
 
@@ -218,6 +234,46 @@ export default function Dashboard() {
                             </div>
                         ))}
                     </div>
+                </div>
+            </div>
+
+            {/* Shop-wise Stock & Revenue */}
+            <div className="card overflow-hidden">
+                <div className="p-6 border-b border-border flex items-center justify-between">
+                    <h2 className="text-lg font-bold">Shop-wise Overview</h2>
+                    <button
+                        onClick={() => navigate('/admin/shops')}
+                        className="text-primary text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all"
+                    >
+                        View Shops <ChevronRight className="w-4 h-4" />
+                    </button>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="bg-muted/50 border-b border-border">
+                            <tr>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Shop Name</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Stock</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Bills Generated</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                            {shopStockData.map((shop) => (
+                                <tr key={shop.id} className="hover:bg-muted/30 transition-colors">
+                                    <td className="px-6 py-4 text-sm font-bold">{shop.name}</td>
+                                    <td className="px-6 py-4 text-sm font-medium">{shop.totalStock} pcs</td>
+                                    <td className="px-6 py-4 text-sm font-medium">{shop.shopSalesCount}</td>
+                                    <td className="px-6 py-4 text-sm font-bold text-green-600">₹{shop.shopRevenue.toLocaleString()}</td>
+                                </tr>
+                            ))}
+                            {shopStockData.length === 0 && (
+                                <tr>
+                                    <td colSpan="4" className="px-6 py-8 text-center text-muted-foreground">No shops registered yet.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
