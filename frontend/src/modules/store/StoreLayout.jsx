@@ -62,14 +62,7 @@ export default function StoreLayout() {
                         </div>
                     </div>
 
-                    {/* Admin Link */}
-                    <Link
-                        to="/admin/dashboard"
-                        className="hidden md:flex items-center gap-1.5 text-xs font-semibold text-white/60 hover:text-white transition-colors pl-4 border-l border-white/20"
-                    >
-                        <ArrowLeft className="w-3.5 h-3.5" />
-                        Admin Panel
-                    </Link>
+
                 </div>
             </header>
 

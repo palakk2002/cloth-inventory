@@ -217,4 +217,17 @@ body {
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
   }
+
+  /* ── Mobile Auth Animations ── */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }

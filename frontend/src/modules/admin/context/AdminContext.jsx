@@ -319,6 +319,11 @@ function adminReducer(state, action) {
                 ...state,
                 productMaster: state.productMaster.filter(p => p.id !== action.payload)
             };
+        case 'UPDATE_MASTER_PRODUCT':
+            return {
+                ...state,
+                productMaster: state.productMaster.map(p => p.id === action.payload.id ? action.payload : p)
+            };
 
         // ──── Customers ────
         case 'ADD_CUSTOMER':

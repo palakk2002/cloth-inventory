@@ -6,9 +6,17 @@ import ReceiveStock from './ReceiveStock';
 import ShopStock from './ShopStock';
 import SalesHistory from './SalesHistory';
 
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+
 export default function StoreRoutes() {
     return (
         <Routes>
+            {/* Auth Routes - No Layout */}
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<Register />} />
+
+            {/* Main Store Routes with Layout */}
             <Route path="/" element={<StoreLayout />}>
                 <Route index element={<Navigate to="pos" replace />} />
                 <Route path="pos" element={<StoreDashboard />} />

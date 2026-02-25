@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Facebook, Twitter, Linkedin, Github, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Facebook, Twitter, Linkedin, Github, ArrowLeft, Store } from 'lucide-react';
 
-export default function SlidingAuthContainer({ initialMode = 'signin' }) {
+export default function StoreSlidingAuthContainer({ initialMode = 'signin' }) {
     const navigate = useNavigate();
     const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
     const [isLoading, setIsLoading] = useState(false);
@@ -15,7 +15,7 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
 
     // Forgot Password Flow States
     const [isForgotPassword, setIsForgotPassword] = useState(false);
-    const [resetStep, setResetStep] = useState(0); // 0: Email, 1: Code, 2: Reset
+    const [resetStep, setResetStep] = useState(0);
     const [recoveryEmail, setRecoveryEmail] = useState('');
     const [verificationCode, setVerificationCode] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -33,11 +33,16 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
 
         setTimeout(() => {
             setIsLoading(false);
-            if (email === 'clothinventory@gmail.com' && password === '1234') {
-                navigate('/admin/dashboard');
-            } else {
-                setError('Invalid email or password');
-            }
+            navigate('/store/pos');
+        }, 1500);
+    };
+
+    const handleSignUp = (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setTimeout(() => {
+            setIsLoading(false);
+            navigate('/store/pos');
         }, 1500);
     };
 
@@ -63,13 +68,13 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
             onSubmit={handleLogin}
             className="bg-white flex flex-col items-center justify-center p-12 h-full text-center"
         >
-            <h1 className="text-3xl font-black mb-4">Sign in</h1>
+            <h1 className="text-3xl font-black mb-4">Store Sign in</h1>
             <div className="flex gap-4 mb-6">
                 <a href="#" className="w-10 h-10 border border-slate-200 rounded-full flex items-center justify-center hover:bg-slate-50 transition-all text-[#1E3A56]"><Facebook size={18} strokeWidth={2.5} /></a>
                 <a href="#" className="w-10 h-10 border border-slate-200 rounded-full flex items-center justify-center hover:bg-slate-50 transition-all text-[#1E3A56] text-sm font-black">G+</a>
                 <a href="#" className="w-10 h-10 border border-slate-200 rounded-full flex items-center justify-center hover:bg-slate-50 transition-all text-[#1E3A56]"><Linkedin size={18} strokeWidth={2.5} /></a>
             </div>
-            <span className="text-sm text-slate-500 mb-4">or use your account</span>
+            <span className="text-sm text-slate-500 mb-4">or use your staff account</span>
             {error && <div className={`text-xs p-2 mb-4 w-full rounded ${error.includes('successfully') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{error}</div>}
             <input
                 type="email"
@@ -120,15 +125,15 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
             </h1>
 
             <p className="text-sm text-slate-500 mb-8 px-4">
-                {resetStep === 0 && "Enter your admin email address to receive a recovery code."}
+                {resetStep === 0 && "Enter your email address to receive a recovery code."}
                 {resetStep === 1 && "We've sent a code to your email. Please enter it below."}
-                {resetStep === 2 && "Create a secure new password for your administration account."}
+                {resetStep === 2 && "Create a secure new password for your account."}
             </p>
 
             {resetStep === 0 && (
                 <input
                     type="email"
-                    placeholder="Admin Email"
+                    placeholder="Staff Email"
                     required
                     value={recoveryEmail}
                     onChange={(e) => setRecoveryEmail(e.target.value)}
@@ -183,9 +188,9 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
                 {/* Logo */}
                 <div className="flex flex-col items-center mb-6">
                     <div className="w-14 h-14 bg-[#1E3A56] rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-[#1E3A56]/20">
-                        <ShieldCheck className="w-7 h-7 text-white" />
+                        <Store className="w-7 h-7 text-white" />
                     </div>
-                    <h2 className="text-xs font-bold tracking-[0.2em] uppercase text-[#1E3A56]/60">Wasgro Mart Admin</h2>
+                    <h2 className="text-xs font-bold tracking-[0.2em] uppercase text-[#1E3A56]/60">Fashion Hub</h2>
                 </div>
 
                 {/* Forgot Password Mobile */}
@@ -204,19 +209,19 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
                             {resetStep === 2 && "New Password"}
                         </h1>
                         <p className="text-sm text-slate-400 mb-6">
-                            {resetStep === 0 && "Enter your admin email to receive code."}
+                            {resetStep === 0 && "Enter your email to receive a recovery code."}
                             {resetStep === 1 && "Enter the code we sent to your email."}
-                            {resetStep === 2 && "Create a secure administration password."}
+                            {resetStep === 2 && "Create a new secure password."}
                         </p>
                         <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
                             {resetStep === 0 && (
                                 <input
                                     type="email"
-                                    placeholder="Admin Email"
+                                    placeholder="Staff Email"
                                     required
                                     value={recoveryEmail}
                                     onChange={(e) => setRecoveryEmail(e.target.value)}
-                                    className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none border border-transparent focus:border-[#1E3A56]/20 focus:ring-4 focus:ring-[#1E3A56]/5 transition-all font-inter"
+                                    className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none border border-transparent focus:border-[#1E3A56]/20 focus:ring-4 focus:ring-[#1E3A56]/5 transition-all"
                                 />
                             )}
                             {resetStep === 1 && (
@@ -226,7 +231,7 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
                                     required
                                     value={verificationCode}
                                     onChange={(e) => setVerificationCode(e.target.value)}
-                                    className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none text-center tracking-[0.5em] font-bold border border-transparent focus:border-[#1E3A56]/20 focus:ring-4 focus:ring-[#1E3A56]/5 transition-all font-inter"
+                                    className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none text-center tracking-[0.5em] font-bold border border-transparent focus:border-[#1E3A56]/20 focus:ring-4 focus:ring-[#1E3A56]/5 transition-all"
                                     maxLength={6}
                                 />
                             )}
@@ -238,13 +243,13 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
                                         required
                                         value={newPassword}
                                         onChange={(e) => setNewPassword(e.target.value)}
-                                        className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none border border-transparent focus:border-[#1E3A56]/20 focus:ring-4 focus:ring-[#1E3A56]/5 transition-all font-inter"
+                                        className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none border border-transparent focus:border-[#1E3A56]/20 focus:ring-4 focus:ring-[#1E3A56]/5 transition-all"
                                     />
                                     <input
                                         type="password"
                                         placeholder="Confirm New Password"
                                         required
-                                        className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none border border-transparent focus:border-[#1E3A56]/20 focus:ring-4 focus:ring-[#1E3A56]/5 transition-all font-inter"
+                                        className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none border border-transparent focus:border-[#1E3A56]/20 focus:ring-4 focus:ring-[#1E3A56]/5 transition-all"
                                     />
                                 </>
                             )}
@@ -262,8 +267,8 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
                 ) : !isSignUp ? (
                     /* Sign In Mobile */
                     <div className="animate-[fadeInUp_0.3s_ease-out]">
-                        <h1 className="text-2xl font-black text-slate-800 mb-1 text-center">Admin Login</h1>
-                        <p className="text-sm text-slate-400 mb-6 text-center">Manage your business operations</p>
+                        <h1 className="text-2xl font-black text-slate-800 mb-1 text-center">Welcome Back</h1>
+                        <p className="text-sm text-slate-400 mb-6 text-center">Sign in to your store account</p>
 
                         {error && (
                             <div className={`text-xs p-3 mb-4 w-full rounded-xl ${error.includes('successfully') ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
@@ -278,7 +283,7 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none border border-transparent focus:border-[#1E3A56]/20 focus:ring-4 focus:ring-[#1E3A56]/5 transition-all placeholder:text-slate-400 font-inter"
+                                className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none border border-transparent focus:border-[#1E3A56]/20 focus:ring-4 focus:ring-[#1E3A56]/5 transition-all placeholder:text-slate-400"
                             />
                             <input
                                 type="password"
@@ -286,7 +291,7 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none border border-transparent focus:border-[#1E3A56]/20 focus:ring-4 focus:ring-[#1E3A56]/5 transition-all placeholder:text-slate-400 font-inter"
+                                className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none border border-transparent focus:border-[#1E3A56]/20 focus:ring-4 focus:ring-[#1E3A56]/5 transition-all placeholder:text-slate-400"
                             />
 
                             <div className="flex items-center justify-end">
@@ -339,43 +344,66 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
                 ) : (
                     /* Sign Up Mobile */
                     <div className="animate-[fadeInUp_0.3s_ease-out]">
-                        <h1 className="text-2xl font-black text-slate-800 mb-1 text-center">Admin Registration</h1>
-                        <p className="text-sm text-slate-400 mb-6 text-center">Join the Wasgro Mart administration</p>
+                        <h1 className="text-2xl font-black text-slate-800 mb-1 text-center">Create Account</h1>
+                        <p className="text-sm text-slate-400 mb-6 text-center">Join the Fashion Hub store team</p>
 
-                        <div className="text-xs bg-amber-50 text-amber-700 p-3 mb-6 rounded-xl border border-amber-100">
-                            Registration is restricted. Please use provided admin credentials or contact system owner.
-                        </div>
-
-                        <form onSubmit={(e) => { e.preventDefault(); setError('Registration restricted.'); }} className="space-y-4 opacity-70">
+                        <form onSubmit={handleSignUp} className="space-y-4">
                             <input
                                 type="text"
                                 placeholder="Full Name"
-                                disabled
-                                className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none border border-transparent font-inter"
+                                required
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none border border-transparent focus:border-[#1E3A56]/20 focus:ring-4 focus:ring-[#1E3A56]/5 transition-all placeholder:text-slate-400"
                             />
                             <input
                                 type="email"
-                                placeholder="Admin Email"
-                                disabled
-                                className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none border border-transparent font-inter"
+                                placeholder="Email Address"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none border border-transparent focus:border-[#1E3A56]/20 focus:ring-4 focus:ring-[#1E3A56]/5 transition-all placeholder:text-slate-400"
                             />
                             <input
                                 type="password"
                                 placeholder="Password"
-                                disabled
-                                className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none border border-transparent font-inter"
+                                required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full bg-slate-50 p-3.5 rounded-xl text-sm outline-none border border-transparent focus:border-[#1E3A56]/20 focus:ring-4 focus:ring-[#1E3A56]/5 transition-all placeholder:text-slate-400"
                             />
 
                             <button
-                                disabled
-                                className="w-full bg-[#1E3A56]/50 text-white py-3.5 rounded-xl font-bold text-sm shadow-sm cursor-not-allowed"
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full bg-[#1E3A56] text-white py-3.5 rounded-xl font-bold text-sm shadow-lg shadow-[#1E3A56]/20 hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-60"
                             >
-                                Sign Up Restricted
+                                {isLoading ? "Creating Account..." : "Sign Up"}
                             </button>
                         </form>
 
-                        {/* Toggle back to Sign In */}
-                        <p className="text-center text-sm text-slate-400 mt-8">
+                        {/* Divider */}
+                        <div className="flex items-center gap-3 my-6">
+                            <div className="flex-1 h-px bg-slate-100"></div>
+                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">or continue with</span>
+                            <div className="flex-1 h-px bg-slate-100"></div>
+                        </div>
+
+                        {/* Social Buttons */}
+                        <div className="flex justify-center gap-4">
+                            <a href="#" className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center hover:bg-slate-100 active:scale-95 transition-all text-[#1E3A56]">
+                                <Facebook size={20} />
+                            </a>
+                            <a href="#" className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center hover:bg-slate-100 active:scale-95 transition-all text-[#1E3A56] font-black text-sm">
+                                G+
+                            </a>
+                            <a href="#" className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center hover:bg-slate-100 active:scale-95 transition-all text-[#1E3A56]">
+                                <Linkedin size={20} />
+                            </a>
+                        </div>
+
+                        {/* Toggle */}
+                        <p className="text-center text-sm text-slate-400 mt-6">
                             Already have an account?{' '}
                             <button onClick={handleToggle} className="text-[#1E3A56] font-bold hover:underline transition-all">
                                 Sign In
@@ -387,12 +415,12 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
 
             {/* Bottom branding */}
             <p className="text-center text-slate-400/60 text-[10px] font-bold tracking-[0.15em] uppercase mt-6">
-                Wasgro Mart Admin &copy; 2026
+                Fashion Hub Store &copy; 2026
             </p>
         </div>
     );
 
-    /* ────────────── MAIN RENDER ────────────── */
+    /* ────────────── DESKTOP UI (unchanged sliding panel) ────────────── */
 
     return (
         <>
@@ -404,7 +432,7 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
                 {/* Sign Up Form */}
                 <div className="form-container sign-up-container">
                     <form
-                        onSubmit={(e) => { e.preventDefault(); setError('Admin registration is restricted. Please contact support.'); }}
+                        onSubmit={(e) => { e.preventDefault(); navigate('/store/pos'); }}
                         className="bg-white flex flex-col items-center justify-center p-12 h-full text-center"
                     >
                         <h1 className="text-3xl font-black mb-4">Create Account</h1>
@@ -413,7 +441,6 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
                             <a href="#" className="w-10 h-10 border border-slate-200 rounded-full flex items-center justify-center hover:bg-slate-50 transition-all text-[#1E3A56] text-sm font-black">G+</a>
                             <a href="#" className="w-10 h-10 border border-slate-200 rounded-full flex items-center justify-center hover:bg-slate-50 transition-all text-[#1E3A56]"><Linkedin size={20} /></a>
                         </div>
-                        {error && isSignUp && <div className="text-xs bg-red-100 text-red-700 p-2 mb-4 w-full rounded">{error}</div>}
                         <span className="text-sm text-slate-500 mb-4">or use your email for registration</span>
                         <input type="text" placeholder="Name" className="w-full bg-slate-100 border-none p-3 mb-2 rounded-lg focus:ring-1 focus:ring-primary outline-none text-sm" />
                         <input type="email" placeholder="Email" className="w-full bg-slate-100 border-none p-3 mb-2 rounded-lg focus:ring-1 focus:ring-primary outline-none text-sm" />

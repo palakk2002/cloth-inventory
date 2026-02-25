@@ -11,6 +11,7 @@ export default function ProductMaster() {
     const { productMaster, skuCounter, categories } = state;
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingId, setEditingId] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [formData, setFormData] = useState({
         name: '',
@@ -58,25 +59,46 @@ export default function ProductMaster() {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        // Generate SKU
-        const sku = generateSKU(formData.category, formData.brand, formData.size, skuCounter);
+        if (editingId) {
+            // Update existing product
+            const existingProduct = productMaster.find(p => p.id === editingId);
+            const updatedProduct = {
+                ...existingProduct,
+                name: formData.name,
+                brand: formData.brand,
+                category: formData.category,
+                size: formData.size,
+                color: formData.color,
+                mrp: parseFloat(formData.mrp),
+                discountPercent: parseFloat(formData.discountPercent) || 0,
+                finalPrice: finalPrice,
+                stock: parseInt(formData.stock) || 0,
+            };
 
-        const newProduct = {
-            id: Date.now(),
-            sku,
-            name: formData.name,
-            brand: formData.brand,
-            category: formData.category,
-            size: formData.size,
-            color: formData.color,
-            mrp: parseFloat(formData.mrp),
-            discountPercent: parseFloat(formData.discountPercent) || 0,
-            finalPrice: finalPrice,
-            stock: parseInt(formData.stock) || 0,
-            barcodeSimulation: sku
-        };
+            dispatch({ type: 'UPDATE_MASTER_PRODUCT', payload: updatedProduct });
+            setSuccessMsg('Product updated successfully!');
+        } else {
+            // Generate SKU for new product
+            const sku = generateSKU(formData.category, formData.brand, formData.size, skuCounter);
 
-        dispatch({ type: 'ADD_MASTER_PRODUCT', payload: newProduct });
+            const newProduct = {
+                id: Date.now(),
+                sku,
+                name: formData.name,
+                brand: formData.brand,
+                category: formData.category,
+                size: formData.size,
+                color: formData.color,
+                mrp: parseFloat(formData.mrp),
+                discountPercent: parseFloat(formData.discountPercent) || 0,
+                finalPrice: finalPrice,
+                stock: parseInt(formData.stock) || 0,
+                barcodeSimulation: sku
+            };
+
+            dispatch({ type: 'ADD_MASTER_PRODUCT', payload: newProduct });
+            setSuccessMsg('Product added successfully with SKU: ' + sku);
+        }
 
         // Reset and close
         setFormData({
@@ -84,9 +106,24 @@ export default function ProductMaster() {
             size: '', color: '', mrp: '',
             discountPercent: '', stock: ''
         });
+        setEditingId(null);
         setIsModalOpen(false);
-        setSuccessMsg('Product added successfully with SKU: ' + sku);
         setTimeout(() => setSuccessMsg(''), 5000);
+    };
+
+    const handleEdit = (product) => {
+        setFormData({
+            name: product.name,
+            brand: product.brand,
+            category: product.category,
+            size: product.size,
+            color: product.color,
+            mrp: product.mrp,
+            discountPercent: product.discountPercent,
+            stock: product.stock
+        });
+        setEditingId(product.id);
+        setIsModalOpen(true);
     };
 
     const handleDelete = (id) => {
@@ -104,7 +141,15 @@ export default function ProductMaster() {
                     <p className="text-muted-foreground">Manage centralized product inventory with auto-SKU generation</p>
                 </div>
                 <button
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => {
+                        setEditingId(null);
+                        setFormData({
+                            name: '', brand: '', category: '',
+                            size: '', color: '', mrp: '',
+                            discountPercent: '', stock: ''
+                        });
+                        setIsModalOpen(true);
+                    }}
                     className="btn-primary flex items-center gap-2 self-start sm:self-auto"
                 >
                     <Plus className="w-4 h-4" /> Add New Product
@@ -204,7 +249,10 @@ export default function ProductMaster() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center justify-center gap-2">
-                                            <button className="p-1.5 text-muted-foreground hover:text-primary transition-colors">
+                                            <button
+                                                onClick={() => handleEdit(p)}
+                                                className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
+                                            >
                                                 <Edit2 className="w-4 h-4" />
                                             </button>
                                             <button
@@ -235,8 +283,8 @@ export default function ProductMaster() {
                     <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
                         <div className="bg-[#1E3A56] text-white p-6 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <Box className="w-5 h-5 text-blue-400" />
-                                <h2 className="text-xl font-bold">Add Master Product</h2>
+                                {editingId ? <Edit2 className="w-5 h-5 text-blue-400" /> : <Box className="w-5 h-5 text-blue-400" />}
+                                <h2 className="text-xl font-bold">{editingId ? 'Edit Master Product' : 'Add Master Product'}</h2>
                             </div>
                             <button onClick={() => setIsModalOpen(false)} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
                                 <X className="w-5 h-5" />
@@ -374,8 +422,8 @@ export default function ProductMaster() {
                                 </div>
                             </div>
 
-                            {/* SKU Preview (Real-time Simulation) */}
-                            {formData.category && formData.brand && formData.size && (
+                            {/* SKU Preview (Real-time Simulation) - Only show for new products */}
+                            {!editingId && formData.category && formData.brand && formData.size && (
                                 <div className="mt-6 flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-dashed border-border">
                                     <div className="flex items-center gap-3">
                                         <Barcode className="w-8 h-8 text-muted-foreground" />
@@ -404,7 +452,7 @@ export default function ProductMaster() {
                                     type="submit"
                                     className="px-8 py-2.5 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
                                 >
-                                    Create Product
+                                    {editingId ? 'Update Product' : 'Create Product'}
                                 </button>
                             </div>
                         </form>
