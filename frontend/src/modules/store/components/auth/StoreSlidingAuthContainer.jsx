@@ -190,7 +190,7 @@ export default function StoreSlidingAuthContainer({ initialMode = 'signin' }) {
                     <div className="w-14 h-14 bg-[#1E3A56] rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-[#1E3A56]/20">
                         <Store className="w-7 h-7 text-white" />
                     </div>
-                    <h2 className="text-xs font-bold tracking-[0.2em] uppercase text-[#1E3A56]/60">Fashion Hub</h2>
+                    <h2 className="text-xs font-bold tracking-[0.2em] uppercase text-[#1E3A56]/60">Cloth Inventory</h2>
                 </div>
 
                 {/* Forgot Password Mobile */}
@@ -345,7 +345,7 @@ export default function StoreSlidingAuthContainer({ initialMode = 'signin' }) {
                     /* Sign Up Mobile */
                     <div className="animate-[fadeInUp_0.3s_ease-out]">
                         <h1 className="text-2xl font-black text-slate-800 mb-1 text-center">Create Account</h1>
-                        <p className="text-sm text-slate-400 mb-6 text-center">Join the Fashion Hub store team</p>
+                        <p className="text-sm text-slate-400 mb-6 text-center">Join the Cloth Inventory team</p>
 
                         <form onSubmit={handleSignUp} className="space-y-4">
                             <input
@@ -413,9 +413,8 @@ export default function StoreSlidingAuthContainer({ initialMode = 'signin' }) {
                 )}
             </div>
 
-            {/* Bottom branding */}
             <p className="text-center text-slate-400/60 text-[10px] font-bold tracking-[0.15em] uppercase mt-6">
-                Fashion Hub Store &copy; 2026
+                Cloth Inventory &copy; 2026
             </p>
         </div>
     );

@@ -21,7 +21,7 @@ export default function AuthLayout({ children }) {
 
             {/* Footer text — hidden on mobile */}
             <p className="hidden md:block fixed bottom-8 text-center text-slate-400 text-[10px] font-bold tracking-[0.2em] uppercase opacity-60">
-                Premium Inventory Management &copy; 2026
+                Cloth Inventory &copy; 2026
             </p>
         </div>
     );

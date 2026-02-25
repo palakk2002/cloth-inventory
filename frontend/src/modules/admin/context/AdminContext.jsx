@@ -55,7 +55,7 @@ const initialState = {
         { id: 3, name: 'Denim Jacket', fabricId: 3, meterPerPiece: 3, sellingPrice: 1800, stock: 25 },
     ],
     shops: [
-        { id: 1, name: 'Fashion Hub', owner: 'Rahul Sharma', contact: '9876543210', address: 'MG Road, Delhi' },
+        { id: 1, name: 'Cloth Inventory', owner: 'Rahul Sharma', contact: '9876543210', address: 'MG Road, Delhi' },
         { id: 2, name: 'Style Point', owner: 'Priya Patel', contact: '9123456780', address: 'Station Rd, Mumbai' },
     ],
     sales: [
@@ -101,11 +101,11 @@ const initialState = {
     // ──── Dispatches (Admin → Shops) ────
     dispatches: [
         {
-            id: 1, shopId: 1, fabricProductId: 1, productName: 'Cotton Kurta', shopName: 'Fashion Hub',
+            id: 1, shopId: 1, fabricProductId: 1, productName: 'Cotton Kurta', shopName: 'Cloth Inventory',
             quantitySent: 15, quantityReceived: 15, dispatchDate: '2026-02-20', status: 'Delivered'
         },
         {
-            id: 2, shopId: 1, fabricProductId: 3, productName: 'Denim Jacket', shopName: 'Fashion Hub',
+            id: 2, shopId: 1, fabricProductId: 3, productName: 'Denim Jacket', shopName: 'Cloth Inventory',
             quantitySent: 10, quantityReceived: 0, dispatchDate: '2026-02-22', status: 'Pending'
         },
         {
@@ -125,7 +125,7 @@ const initialState = {
     // ──── Store Bills (from shop billing) ────
     storeBills: [
         {
-            id: 1, billId: 'BILL-2026-0001', shopId: 1, shopName: 'Fashion Hub',
+            id: 1, billId: 'BILL-2026-0001', shopId: 1, shopName: 'Cloth Inventory',
             customerName: 'Amit Kumar', customerPhone: '9988776655',
             items: [{ fabricProductId: 1, productName: 'Cotton Kurta', quantity: 3, pricePerUnit: 850, total: 2550 }],
             subtotal: 2550, gst: 127.5, discount: 0, totalAmount: 2677.5,
@@ -133,7 +133,7 @@ const initialState = {
             paymentMethod: 'cash', paymentStatus: 'Paid', transactionId: null
         },
         {
-            id: 2, billId: 'BILL-2026-0002', shopId: 1, shopName: 'Fashion Hub',
+            id: 2, billId: 'BILL-2026-0002', shopId: 1, shopName: 'Cloth Inventory',
             customerName: 'Sneha Gupta', customerPhone: '8877665544',
             items: [
                 { fabricProductId: 3, productName: 'Denim Jacket', quantity: 1, pricePerUnit: 1800, total: 1800 },
@@ -144,7 +144,7 @@ const initialState = {
             paymentMethod: 'upi', paymentStatus: 'Paid', transactionId: 'UPI-TXN-9384756'
         },
         {
-            id: 3, billId: 'BILL-2026-0003', shopId: 1, shopName: 'Fashion Hub',
+            id: 3, billId: 'BILL-2026-0003', shopId: 1, shopName: 'Cloth Inventory',
             customerName: 'Walk-in Customer', customerPhone: '',
             items: [{ fabricProductId: 1, productName: 'Cotton Kurta', quantity: 1, pricePerUnit: 850, total: 850 }],
             subtotal: 850, gst: 42.5, discount: 0, totalAmount: 892.5,

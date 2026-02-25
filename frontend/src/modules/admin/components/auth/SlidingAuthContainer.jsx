@@ -185,7 +185,7 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
                     <div className="w-14 h-14 bg-[#1E3A56] rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-[#1E3A56]/20">
                         <ShieldCheck className="w-7 h-7 text-white" />
                     </div>
-                    <h2 className="text-xs font-bold tracking-[0.2em] uppercase text-[#1E3A56]/60">Wasgro Mart Admin</h2>
+                    <h2 className="text-xs font-bold tracking-[0.2em] uppercase text-[#1E3A56]/60">Cloth Inventory</h2>
                 </div>
 
                 {/* Forgot Password Mobile */}
@@ -340,7 +340,7 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
                     /* Sign Up Mobile */
                     <div className="animate-[fadeInUp_0.3s_ease-out]">
                         <h1 className="text-2xl font-black text-slate-800 mb-1 text-center">Admin Registration</h1>
-                        <p className="text-sm text-slate-400 mb-6 text-center">Join the Wasgro Mart administration</p>
+                        <p className="text-sm text-slate-400 mb-6 text-center">Join the Cloth Inventory administration</p>
 
                         <div className="text-xs bg-amber-50 text-amber-700 p-3 mb-6 rounded-xl border border-amber-100">
                             Registration is restricted. Please use provided admin credentials or contact system owner.
@@ -385,9 +385,8 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
                 )}
             </div>
 
-            {/* Bottom branding */}
             <p className="text-center text-slate-400/60 text-[10px] font-bold tracking-[0.15em] uppercase mt-6">
-                Wasgro Mart Admin &copy; 2026
+                Cloth Inventory &copy; 2026
             </p>
         </div>
     );

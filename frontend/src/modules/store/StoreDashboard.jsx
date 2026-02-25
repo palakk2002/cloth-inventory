@@ -9,7 +9,7 @@ import BillModal from './BillModal';
 import HoldBills from './HoldBills';
 
 const CURRENT_SHOP_ID = 1;
-const CURRENT_SHOP_NAME = 'Fashion Hub';
+const CURRENT_SHOP_NAME = 'Cloth Inventory';
 
 export default function StoreDashboard() {
     const { state, dispatch } = useAdmin();

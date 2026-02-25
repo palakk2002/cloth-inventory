@@ -35,7 +35,7 @@ export default function StoreLayout() {
                             <Store className="w-5 h-5" />
                         </div>
                         <div>
-                            <h1 className="text-lg font-bold tracking-tight leading-tight">Fashion Hub</h1>
+                            <h1 className="text-lg font-bold tracking-tight leading-tight">Cloth Inventory</h1>
                             <p className="text-[10px] uppercase tracking-widest text-white/60 font-medium">Store Module</p>
                         </div>
                     </div>
