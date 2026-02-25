@@ -27,7 +27,6 @@ const menuItems = [
     { icon: Tag, label: 'Categories', path: '/admin/categories' },
     { icon: Package, label: 'Products', path: '/admin/products' },
     { icon: Barcode, label: 'Product Master', path: '/admin/product-master' },
-    { icon: Upload, label: 'Bulk Upload', path: '/admin/bulk-upload' },
     { icon: Box, label: 'Stock Management', path: '/admin/stock' },
     { icon: Scissors, label: 'Fabrics', path: '/admin/fabrics' },
     { icon: Truck, label: 'Supplier Orders', path: '/admin/supplier-orders' },

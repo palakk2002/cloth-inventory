@@ -18,7 +18,6 @@ import SupplierOrders from '../pages/SupplierOrders';
 import CustomerManagement from '../pages/CustomerManagement';
 import SalesOverview from '../pages/SalesOverview';
 import ProductMaster from '../pages/ProductMaster';
-import BulkUpload from '../pages/BulkUpload';
 import ProductPreviewPage from '../pages/ProductPreviewPage';
 
 export default function AdminRoutes() {
@@ -41,7 +40,6 @@ export default function AdminRoutes() {
                 <Route path="dispatch" element={<Dispatch />} />
                 <Route path="sales-overview" element={<SalesOverview />} />
                 <Route path="product-master" element={<ProductMaster />} />
-                <Route path="bulk-upload" element={<BulkUpload />} />
                 <Route path="customer-management" element={<CustomerManagement />} />
                 <Route path="staff" element={<Staff />} />
                 <Route path="reports" element={<Reports />} />
