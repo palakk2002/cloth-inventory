@@ -19,12 +19,14 @@ import CustomerManagement from '../pages/CustomerManagement';
 import SalesOverview from '../pages/SalesOverview';
 import ProductMaster from '../pages/ProductMaster';
 import BulkUpload from '../pages/BulkUpload';
+import ProductPreviewPage from '../pages/ProductPreviewPage';
 
 export default function AdminRoutes() {
     return (
         <Routes>
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
+            <Route path="product-preview" element={<ProductPreviewPage />} />
 
             <Route path="/" element={<AdminLayout />}>
                 <Route index element={<Navigate to="login" replace />} />

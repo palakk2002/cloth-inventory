@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAdmin } from '../admin/context/AdminContext';
 import { storeProducts } from './mockData';
-import { Search, AlertTriangle, ShoppingBag, Plus, Minus, Barcode, CheckCircle2, Zap } from 'lucide-react';
+import { Search, AlertTriangle, ShoppingBag, Plus, Minus, Barcode, CheckCircle2, Zap, Camera } from 'lucide-react';
+import BarcodeCameraScanner from './BarcodeCameraScanner';
 
 const CURRENT_SHOP_ID = 1;
 
@@ -59,6 +60,7 @@ export default function ProductScanner({ onAddToCart }) {
     const [skuNotFound, setSkuNotFound] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
     const [lastScanned, setLastScanned] = useState(null);
+    const [isScannerOpen, setIsScannerOpen] = useState(false);
 
     // ── Refs ──
     const skuInputRef = useRef(null);
@@ -100,6 +102,28 @@ export default function ProductScanner({ onAddToCart }) {
             // Keep focus so cashier can correct input
             skuInputRef.current?.select();
         }
+    };
+
+    // ── Barcode JSON Handler (Camera Scan) ──
+    const handleBarcodeScan = (data) => {
+        if (!data) return;
+
+        // Map barcode JSON keys to POS cart structure
+        const productFromScan = {
+            fabricProductId: Date.now(), // Generate temporary ID
+            name: data.productName || 'Unknown Product',
+            price: parseFloat(data.finalPrice || data.mrp || 0),
+            code: data.designCode || '',
+            size: data.size || '',
+            color: data.color || '',
+            brand: data.brand || '',
+            stock: 999,
+            source: 'scanner',
+            quantity: 1
+        };
+
+        onAddToCart(productFromScan);
+        showSuccess(`Scanned: ${productFromScan.name}`, { code: productFromScan.code, name: productFromScan.name });
     };
 
     // ── Name Search Handler ──
@@ -206,8 +230,24 @@ export default function ProductScanner({ onAddToCart }) {
                     <button type="submit" className="px-4 py-2.5 bg-[#1E3A56] text-white text-sm font-bold rounded-lg hover:bg-[#2c537a] transition-colors">
                         Scan
                     </button>
+                    <button
+                        type="button"
+                        onClick={() => setIsScannerOpen(true)}
+                        className="px-4 py-2.5 border border-primary text-primary hover:bg-primary/5 rounded-lg transition-colors flex items-center gap-2"
+                        title="Open Camera Scanner"
+                    >
+                        <Camera className="w-4 h-4" />
+                    </button>
                 </form>
             </div>
+
+            {/* Camera Scanner Modal */}
+            {isScannerOpen && (
+                <BarcodeCameraScanner
+                    onScan={handleBarcodeScan}
+                    onClose={() => setIsScannerOpen(false)}
+                />
+            )}
 
             {/* ── Feedback Messages ── */}
             {successMsg && (

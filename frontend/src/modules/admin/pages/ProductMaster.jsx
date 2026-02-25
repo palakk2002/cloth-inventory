@@ -3,8 +3,10 @@ import { useAdmin, generateSKU } from '../context/AdminContext';
 import {
     Plus, Search, Filter, Trash2, Edit2,
     Barcode, Tag, Package, Box, IndianRupee,
-    X, CheckCircle, AlertCircle
+    X, CheckCircle, AlertCircle, Eye
 } from 'lucide-react';
+import ProductTagPreview from '../components/product/ProductTagPreview';
+import ProductPreviewModal from '../components/product/ProductPreviewModal';
 
 export default function ProductMaster() {
     const { state, dispatch } = useAdmin();
@@ -23,6 +25,7 @@ export default function ProductMaster() {
         discountPercent: '',
         stock: ''
     });
+    const [previewProduct, setPreviewProduct] = useState(null);
 
     const [successMsg, setSuccessMsg] = useState('');
 
@@ -250,6 +253,13 @@ export default function ProductMaster() {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center justify-center gap-2">
                                             <button
+                                                onClick={() => setPreviewProduct(p)}
+                                                className="p-1.5 text-muted-foreground hover:text-blue-500 transition-colors"
+                                                title="View Product Tag"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </button>
+                                            <button
                                                 onClick={() => handleEdit(p)}
                                                 className="p-1.5 text-muted-foreground hover:text-primary transition-colors"
                                             >
@@ -279,8 +289,8 @@ export default function ProductMaster() {
 
             {/* Add Product Modal */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 text-left">
+                    <div className="w-full max-w-5xl bg-white rounded-2xl shadow-2xl overflow-x-hidden overflow-y-visible max-h-[90vh] animate-in zoom-in-95 duration-300">
                         <div className="bg-[#1E3A56] text-white p-6 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 {editingId ? <Edit2 className="w-5 h-5 text-blue-400" /> : <Box className="w-5 h-5 text-blue-400" />}
@@ -291,174 +301,189 @@ export default function ProductMaster() {
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                {/* Left Col */}
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Product Name *</label>
-                                        <div className="relative">
-                                            <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                            <input
-                                                required
-                                                name="name"
-                                                value={formData.name}
-                                                onChange={handleInputChange}
-                                                type="text"
-                                                placeholder="e.g. Slim Fit Denim"
-                                                className="w-full pl-10 pr-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
-                                            />
+                        <form onSubmit={handleSubmit}>
+                            <div className="p-6">
+                                <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 min-w-0">
+                                    {/* Left Col: Form */}
+                                    <div className="lg:col-span-3 min-w-0">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                            {/* Form Fields Column 1 */}
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Product Name *</label>
+                                                    <div className="relative">
+                                                        <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                                        <input
+                                                            required
+                                                            name="name"
+                                                            value={formData.name}
+                                                            onChange={handleInputChange}
+                                                            type="text"
+                                                            placeholder="e.g. Slim Fit Denim"
+                                                            className="w-full pl-10 pr-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Brand *</label>
+                                                        <input
+                                                            required
+                                                            name="brand"
+                                                            value={formData.brand}
+                                                            onChange={handleInputChange}
+                                                            type="text"
+                                                            placeholder="e.g. UrbanWear"
+                                                            className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Category *</label>
+                                                        <select
+                                                            required
+                                                            name="category"
+                                                            value={formData.category}
+                                                            onChange={handleInputChange}
+                                                            className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 bg-white text-sm"
+                                                        >
+                                                            <option value="">Select</option>
+                                                            {categoryOptions.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Size *</label>
+                                                        <input
+                                                            required
+                                                            name="size"
+                                                            value={formData.size}
+                                                            onChange={handleInputChange}
+                                                            type="text"
+                                                            placeholder="e.g. M, 32, XL"
+                                                            className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Color *</label>
+                                                        <input
+                                                            required
+                                                            name="color"
+                                                            value={formData.color}
+                                                            onChange={handleInputChange}
+                                                            type="text"
+                                                            placeholder="e.g. Blue, Black"
+                                                            className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Form Fields Column 2 */}
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">MRP *</label>
+                                                    <div className="relative">
+                                                        <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                                        <input
+                                                            required
+                                                            name="mrp"
+                                                            value={formData.mrp}
+                                                            onChange={handleInputChange}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                            className="w-full pl-10 pr-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Discount (%)</label>
+                                                    <input
+                                                        name="discountPercent"
+                                                        value={formData.discountPercent}
+                                                        onChange={handleInputChange}
+                                                        type="number"
+                                                        placeholder="0"
+                                                        className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Opening Stock (Optional)</label>
+                                                    <input
+                                                        name="stock"
+                                                        value={formData.stock}
+                                                        onChange={handleInputChange}
+                                                        type="number"
+                                                        placeholder="0"
+                                                        className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
+                                                    />
+                                                </div>
+
+                                                {/* Final Price Preview */}
+                                                <div className="bg-primary/5 rounded-xl p-4 border border-primary/10">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className="text-xs font-bold text-muted-foreground uppercase">Estimated Final Price</span>
+                                                        <span className="text-lg font-bold text-primary">₹{finalPrice.toLocaleString()}</span>
+                                                    </div>
+                                                    <p className="text-[10px] text-muted-foreground italic">
+                                                        * Final price is calculated as MRP - Discount.
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Brand *</label>
-                                            <input
-                                                required
-                                                name="brand"
-                                                value={formData.brand}
-                                                onChange={handleInputChange}
-                                                type="text"
-                                                placeholder="e.g. UrbanWear"
-                                                className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Category *</label>
-                                            <select
-                                                required
-                                                name="category"
-                                                value={formData.category}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 bg-white text-sm"
-                                            >
-                                                <option value="">Select</option>
-                                                {categoryOptions.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Size *</label>
-                                            <input
-                                                required
-                                                name="size"
-                                                value={formData.size}
-                                                onChange={handleInputChange}
-                                                type="text"
-                                                placeholder="e.g. M, 32, XL"
-                                                className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Color *</label>
-                                            <input
-                                                required
-                                                name="color"
-                                                value={formData.color}
-                                                onChange={handleInputChange}
-                                                type="text"
-                                                placeholder="e.g. Blue, Black"
-                                                className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
-                                            />
+                                    {/* Right Col: Live Preview */}
+                                    <div className="lg:col-span-2 flex flex-col items-center min-w-0">
+                                        <div className="sticky top-0 w-full max-w-full flex flex-col items-center overflow-visible pr-2">
+                                            <div className="mb-6 w-full">
+                                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                                                    Live Tag Preview
+                                                </h3>
+                                                <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 flex justify-center w-full max-w-full overflow-visible">
+                                                    <ProductTagPreview productData={{
+                                                        ...formData,
+                                                        sku: editingId ? productMaster.find(p => p.id === editingId)?.sku : generateSKU(formData.category, formData.brand, formData.size, skuCounter)
+                                                    }} />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Right Col */}
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">MRP *</label>
-                                        <div className="relative">
-                                            <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                            <input
-                                                required
-                                                name="mrp"
-                                                value={formData.mrp}
-                                                onChange={handleInputChange}
-                                                type="number"
-                                                placeholder="0.00"
-                                                className="w-full pl-10 pr-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Discount (%)</label>
-                                        <input
-                                            name="discountPercent"
-                                            value={formData.discountPercent}
-                                            onChange={handleInputChange}
-                                            type="number"
-                                            placeholder="0"
-                                            className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">Opening Stock (Optional)</label>
-                                        <input
-                                            name="stock"
-                                            value={formData.stock}
-                                            onChange={handleInputChange}
-                                            type="number"
-                                            placeholder="0"
-                                            className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 text-sm"
-                                        />
-                                    </div>
-
-                                    {/* Final Price Preview */}
-                                    <div className="bg-primary/5 rounded-xl p-4 border border-primary/10">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-xs font-bold text-muted-foreground uppercase">Estimated Final Price</span>
-                                            <span className="text-lg font-bold text-primary">₹{finalPrice.toLocaleString()}</span>
-                                        </div>
-                                        <p className="text-[10px] text-muted-foreground italic">
-                                            * Final price is calculated as MRP - Discount.
-                                        </p>
-                                    </div>
+                                <div className="mt-8 flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsModalOpen(false)}
+                                        className="px-6 py-2.5 text-sm font-bold text-muted-foreground hover:bg-muted rounded-xl transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-8 py-2.5 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+                                    >
+                                        {editingId ? 'Update Product' : 'Create Product'}
+                                    </button>
                                 </div>
-                            </div>
-
-                            {/* SKU Preview (Real-time Simulation) - Only show for new products */}
-                            {!editingId && formData.category && formData.brand && formData.size && (
-                                <div className="mt-6 flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-dashed border-border">
-                                    <div className="flex items-center gap-3">
-                                        <Barcode className="w-8 h-8 text-muted-foreground" />
-                                        <div>
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Preview SKU (Auto-generated)</p>
-                                            <p className="text-sm font-mono font-bold text-foreground">
-                                                {generateSKU(formData.category, formData.brand, formData.size, skuCounter)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 text-xs text-green-600 font-bold">
-                                        <CheckCircle className="w-4 h-4" /> Ready to Save
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="mt-8 flex items-center justify-end gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="px-6 py-2.5 text-sm font-bold text-muted-foreground hover:bg-muted rounded-xl transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-8 py-2.5 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
-                                >
-                                    {editingId ? 'Update Product' : 'Create Product'}
-                                </button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
+
+            {/* Product Preview Modal */}
+            <ProductPreviewModal
+                isOpen={!!previewProduct}
+                onClose={() => setPreviewProduct(null)}
+                product={previewProduct}
+            />
         </div>
     );
 }
+
