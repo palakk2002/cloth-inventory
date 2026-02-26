@@ -18,6 +18,8 @@ import SupplierOrders from '../pages/SupplierOrders';
 import CustomerManagement from '../pages/CustomerManagement';
 import SalesOverview from '../pages/SalesOverview';
 import ProductMaster from '../pages/ProductMaster';
+import BulkUpload from '../pages/BulkUpload';
+import ProtectedRoute from '../../../components/ProtectedRoute';
 import ProductPreviewPage from '../pages/ProductPreviewPage';
 import MaterialReceived from '../pages/MaterialReceived';
 import Cutting from '../pages/Cutting';
@@ -26,12 +28,21 @@ import Finishing from '../pages/Finishing';
 export default function AdminRoutes() {
     return (
         <Routes>
+            {/* Public auth routes */}
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route path="product-preview" element={<ProductPreviewPage />} />
 
-            <Route path="/" element={<AdminLayout />}>
-                <Route index element={<Navigate to="login" replace />} />
+            {/* Protected admin routes */}
+            <Route
+                path="/"
+                element={
+                    <ProtectedRoute role="admin">
+                        <AdminLayout />
+                    </ProtectedRoute>
+                }
+            >
+                <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="categories" element={<Categories />} />
                 <Route path="products" element={<Products />} />

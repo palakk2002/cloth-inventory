@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, NavLink, Link } from 'react-router-dom';
-import { Store, User, Clock, ArrowLeft, PackageCheck, Package, Receipt, History } from 'lucide-react';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Store, User, Clock, PackageCheck, Package, Receipt, History, LogOut } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const storeNavItems = [
     { icon: PackageCheck, label: 'Receive Stock', path: '/store/receive' },
@@ -11,6 +12,18 @@ const storeNavItems = [
 ];
 
 export default function StoreLayout() {
+    const navigate = useNavigate();
+    const { user, logout } = useAuth();
+    const displayName = user?.name || 'Staff';
+    const displayShop = user?.shopName || 'Counter Staff';
+    const displayInitial = displayName.charAt(0).toUpperCase();
+
+    const handleLogout = async () => {
+        if (window.confirm('Are you sure you want to log out?')) {
+            await logout();
+            navigate('/store/login');
+        }
+    };
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
@@ -55,12 +68,19 @@ export default function StoreLayout() {
                     {/* Staff Info */}
                     <div className="flex items-center gap-3 pl-4 border-l border-white/20">
                         <div className="text-right hidden sm:block">
-                            <p className="text-sm font-bold">Rahul Sharma</p>
-                            <p className="text-[10px] text-white/60 font-medium uppercase tracking-wider">Counter Staff</p>
+                            <p className="text-sm font-bold">{displayName}</p>
+                            <p className="text-[10px] text-white/60 font-medium uppercase tracking-wider">{displayShop}</p>
                         </div>
                         <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm">
-                            <User className="w-5 h-5" />
+                            {displayInitial}
                         </div>
+                        <button
+                            onClick={handleLogout}
+                            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                            title="Logout"
+                        >
+                            <LogOut className="w-4 h-4" />
+                        </button>
                     </div>
 
 
