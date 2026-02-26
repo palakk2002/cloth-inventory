@@ -62,7 +62,7 @@ const storeSchema = new mongoose.Schema(
 
 // Indexes for search performance
 storeSchema.index({ name: 'text', 'location.city': 'text', 'location.state': 'text' });
-storeSchema.index({ storeCode: 1 });
+// storeSchema.index({ storeCode: 1 }); // unique: true handles this
 storeSchema.index({ isActive: 1 });
 storeSchema.index({ isDeleted: 1 });
 

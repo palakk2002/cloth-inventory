@@ -3,11 +3,11 @@ import api from './api';
 const storeService = {
     getAll: async () => {
         const response = await api.get('/stores');
-        return response.data;
+        return response.data.stores || [];
     },
     create: async (storeData) => {
         const response = await api.post('/stores', storeData);
-        return response.data;
+        return response.data.store;
     },
     update: async (id, storeData) => {
         const response = await api.put(`/stores/${id}`, storeData);

@@ -4,7 +4,7 @@ import Modal from '../components/Modal';
 import { Plus, Edit2, Trash2, Search, Store, AlertCircle } from 'lucide-react';
 
 export default function Shops() {
-    const { state, dispatch } = useAdmin();
+    const { state, dispatch, addStore, deleteStore: deleteStoreAction } = useAdmin();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingShop, setEditingShop] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -19,7 +19,7 @@ export default function Shops() {
     const handleOpenModal = (shop = null) => {
         if (shop) {
             setEditingShop(shop);
-            setFormData({ name: shop.name, owner: shop.owner, contact: shop.contact, address: shop.address });
+            setFormData({ name: shop.name, owner: shop.owner || '', contact: shop.contact || '', address: shop.address || '' });
         } else {
             setEditingShop(null);
             setFormData({ name: '', owner: '', contact: '', address: '' });
@@ -27,32 +27,32 @@ export default function Shops() {
         setIsModalOpen(true);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (editingShop) {
-            dispatch({ type: 'UPDATE_SHOP', payload: { ...editingShop, ...formData } });
+            alert('Update shop is currently restricted.');
         } else {
-            dispatch({ type: 'ADD_SHOP', payload: formData });
+            const res = await addStore(formData);
+            if (res.success) setIsModalOpen(false);
         }
-        setIsModalOpen(false);
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this shop?')) {
-            dispatch({ type: 'DELETE_SHOP', payload: id });
+            await deleteStoreAction(id);
         }
     };
 
     const filteredShops = state.shops.filter(s =>
         s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.owner.toLowerCase().includes(searchTerm.toLowerCase())
+        (s.owner?.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
-    // Calculate total purchases per shop from sales data
+    // Calculate total purchases per shop from storeBills data
     const getShopPurchaseTotal = (shopId) => {
-        return state.sales
-            .filter(s => s.shopId === shopId)
-            .reduce((acc, s) => acc + s.totalAmount, 0);
+        return state.storeBills
+            .filter(b => b.shopId === shopId)
+            .reduce((acc, b) => acc + (b.totalAmount || 0), 0);
     };
 
     return (
@@ -104,7 +104,7 @@ export default function Shops() {
                     <div>
                         <p className="text-sm font-medium text-muted-foreground">Total Sales Value</p>
                         <h3 className="text-2xl font-bold mt-1 tracking-tight">
-                            ₹{state.sales.reduce((acc, s) => acc + s.totalAmount, 0).toLocaleString()}
+                            ₹{state.storeBills.reduce((acc, b) => acc + (b.totalAmount || 0), 0).toLocaleString()}
                         </h3>
                     </div>
                 </div>
@@ -138,14 +138,14 @@ export default function Shops() {
                         </thead>
                         <tbody className="divide-y divide-border">
                             {filteredShops.map((shop) => (
-                                <tr key={shop.id} className="hover:bg-muted/30 transition-colors">
+                                <tr key={shop._id} className="hover:bg-muted/30 transition-colors">
                                     <td className="px-6 py-4">
                                         <span className="text-sm font-bold">{shop.name}</span>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-muted-foreground">{shop.owner}</td>
                                     <td className="px-6 py-4 text-sm font-mono text-muted-foreground">{shop.contact}</td>
                                     <td className="px-6 py-4 text-sm text-muted-foreground max-w-[200px] truncate">{shop.address}</td>
-                                    <td className="px-6 py-4 text-sm font-bold">₹{getShopPurchaseTotal(shop.id).toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-sm font-bold">₹{getShopPurchaseTotal(shop._id).toLocaleString()}</td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
                                             <button
@@ -155,7 +155,7 @@ export default function Shops() {
                                                 <Edit2 className="w-4 h-4" />
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(shop.id)}
+                                                onClick={() => handleDelete(shop._id)}
                                                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                             >
                                                 <Trash2 className="w-4 h-4" />

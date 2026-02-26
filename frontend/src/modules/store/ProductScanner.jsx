@@ -1,46 +1,34 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAdmin } from '../admin/context/AdminContext';
-import { storeProducts } from './mockData';
 import { Search, AlertTriangle, ShoppingBag, Plus, Minus, Barcode, CheckCircle2, Zap, Camera } from 'lucide-react';
 import BarcodeCameraScanner from './BarcodeCameraScanner';
 
-const CURRENT_SHOP_ID = 1;
+const CURRENT_SHOP_ID_PLACEHOLDER = 1;
 
-// ── Reusable search utility (future: swap for API call) ──
+// ── Reusable search utility ──
 function searchProductBySku(skuOrCode, productMaster, shopStock, shopId) {
     const query = skuOrCode.trim().toUpperCase();
     if (!query) return null;
 
-    // 1. Search Product Master by SKU
-    const masterHit = productMaster.find(p => p.sku.toUpperCase() === query);
+    // 1. Search Product Master by SKU or Barcode
+    const masterHit = productMaster.find(p => p.sku.toUpperCase() === query || p.barcode.toUpperCase() === query);
+
     if (masterHit) {
-        const stockItem = shopStock.find(s => s.shopId === shopId && s.productName === masterHit.name);
+        // Find if this product is in this shop's stock
+        // Note: shopStock items from backend have productId and quantityAvailable
+        const stockItem = shopStock.find(s => s.productId === masterHit._id);
+
         return {
-            fabricProductId: stockItem ? stockItem.fabricProductId : masterHit.id,
+            fabricProductId: masterHit._id,
             name: masterHit.name,
-            price: masterHit.finalPrice,
+            price: masterHit.salePrice,
             code: masterHit.sku,
+            barcode: masterHit.barcode,
             size: masterHit.size || '',
             color: masterHit.color || '',
             brand: masterHit.brand || '',
-            stock: stockItem ? stockItem.currentStock : masterHit.stock,
+            stock: stockItem ? stockItem.quantityAvailable : 0,
             source: 'master',
-        };
-    }
-
-    // 2. Search Store Products (mockData) by code
-    const storeHit = storeProducts.find(p => p.code.toUpperCase() === query);
-    if (storeHit) {
-        return {
-            fabricProductId: storeHit.id,
-            name: storeHit.name,
-            price: storeHit.price,
-            code: storeHit.code,
-            size: storeHit.size || '',
-            color: storeHit.color || '',
-            brand: '',
-            stock: storeHit.stock,
-            source: 'store',
         };
     }
 
@@ -49,7 +37,8 @@ function searchProductBySku(skuOrCode, productMaster, shopStock, shopId) {
 
 export default function ProductScanner({ onAddToCart }) {
     const { state } = useAdmin();
-    const { productMaster, shopStock } = state;
+    const { productMaster, shopStock, user } = state;
+    const shopId = user?.shopId || state.shops?.[0]?._id;
 
     // ── State ──
     const [searchTerm, setSearchTerm] = useState('');
@@ -71,10 +60,7 @@ export default function ProductScanner({ onAddToCart }) {
         skuInputRef.current?.focus();
     }, []);
 
-    // Get this shop's stock
-    const shopItems = shopStock.filter(s => s.shopId === CURRENT_SHOP_ID);
-
-    // ── Show success toast (auto-dismiss after 2.5s) ──
+    // ── Show success toast ──
     const showSuccess = useCallback((msg, product) => {
         setSuccessMsg(msg);
         setLastScanned(product);
@@ -88,18 +74,16 @@ export default function ProductScanner({ onAddToCart }) {
         e.preventDefault();
         if (!skuInput.trim()) return;
 
-        const result = searchProductBySku(skuInput, productMaster, shopStock, CURRENT_SHOP_ID);
+        const result = searchProductBySku(skuInput, productMaster, shopStock, shopId);
 
         if (result) {
             onAddToCart({ ...result, quantity: 1 });
             showSuccess(`Added: ${result.name}`, { code: result.code, name: result.name });
             setSkuInput('');
-            // Re-focus for next scan
             setTimeout(() => skuInputRef.current?.focus(), 50);
         } else {
             setSkuNotFound(true);
             setSuccessMsg('');
-            // Keep focus so cashier can correct input
             skuInputRef.current?.select();
         }
     };
@@ -108,22 +92,30 @@ export default function ProductScanner({ onAddToCart }) {
     const handleBarcodeScan = (data) => {
         if (!data) return;
 
-        // Map barcode JSON keys to POS cart structure
-        const productFromScan = {
-            fabricProductId: Date.now(), // Generate temporary ID
-            name: data.productName || 'Unknown Product',
-            price: parseFloat(data.finalPrice || data.mrp || 0),
-            code: data.designCode || '',
-            size: data.size || '',
-            color: data.color || '',
-            brand: data.brand || '',
-            stock: 999,
-            source: 'scanner',
-            quantity: 1
-        };
+        // Try to find the product in our master list first for accuracy
+        const skuOrBarcode = data.barcode || data.designCode || data.sku;
+        const result = searchProductBySku(skuOrBarcode, productMaster, shopStock, shopId);
 
-        onAddToCart(productFromScan);
-        showSuccess(`Scanned: ${productFromScan.name}`, { code: productFromScan.code, name: productFromScan.name });
+        if (result) {
+            onAddToCart({ ...result, quantity: 1 });
+            showSuccess(`Scanned: ${result.name}`, { code: result.code, name: result.name });
+        } else {
+            // Fallback to data from scan if not in master (less reliable)
+            const productFromScan = {
+                fabricProductId: data._id || Date.now(),
+                name: data.productName || data.name || 'Unknown Product',
+                price: parseFloat(data.finalPrice || data.salePrice || data.mrp || 0),
+                code: data.designCode || data.sku || '',
+                size: data.size || '',
+                color: data.color || '',
+                brand: data.brand || '',
+                stock: 999,
+                source: 'scanner',
+                quantity: 1
+            };
+            onAddToCart(productFromScan);
+            showSuccess(`Scanned: ${productFromScan.name}`, { code: productFromScan.code, name: productFromScan.name });
+        }
     };
 
     // ── Name Search Handler ──
@@ -131,40 +123,42 @@ export default function ProductScanner({ onAddToCart }) {
         e.preventDefault();
         if (!searchTerm.trim()) return;
 
-        const found = shopItems.find(
-            item => item.productName.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        const term = searchTerm.toLowerCase();
+        // Search in master list for name match
+        const masterHits = productMaster.filter(p => p.name.toLowerCase().includes(term));
 
-        if (found) {
-            setFoundProduct(found);
+        if (masterHits.length > 0) {
+            // Pick first hit for now or show dropdown (simplifying to first hit for POS speed)
+            const hit = masterHits[0];
+            const stockItem = shopStock.find(s => s.productId === hit._id);
+
+            setFoundProduct({
+                fabricProductId: hit._id,
+                productName: hit.name,
+                sellingPrice: hit.salePrice,
+                currentStock: stockItem ? stockItem.quantityAvailable : 0,
+                code: hit.sku,
+                size: hit.size,
+                color: hit.color,
+                brand: hit.brand
+            });
             setNotFound(false);
             setQuantity(1);
         } else {
-            // Also search storeProducts by name
-            const storeHit = storeProducts.find(
-                p => p.name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            if (storeHit) {
-                setFoundProduct({
-                    ...storeHit,
-                    productName: storeHit.name,
-                    sellingPrice: storeHit.price,
-                    currentStock: storeHit.stock,
-                    fabricProductId: storeHit.id,
-                });
-                setNotFound(false);
-                setQuantity(1);
-            } else {
-                setFoundProduct(null);
-                setNotFound(true);
-            }
+            setFoundProduct(null);
+            setNotFound(true);
         }
     };
 
     // ── Add from name-search card ──
     const handleAddToCart = () => {
         if (!foundProduct || quantity < 1) return;
-        if (quantity > foundProduct.currentStock) return;
+        // Allow adding even if 0 stock? Usually no for POS, but maybe for preorder. 
+        // Let's stick to simple POS logic.
+        if (foundProduct.currentStock < quantity) {
+            setNotFound(true);
+            return;
+        }
 
         onAddToCart({
             fabricProductId: foundProduct.fabricProductId,
@@ -187,12 +181,27 @@ export default function ProductScanner({ onAddToCart }) {
     };
 
     // ── Quick-select from chips ──
-    const quickSelectProduct = (item) => {
-        setFoundProduct(item);
-        setSearchTerm(item.productName);
+    const quickSelectProduct = (product) => {
+        const stockItem = shopStock.find(s => s.productId === product._id);
+        setFoundProduct({
+            fabricProductId: product._id,
+            productName: product.name,
+            sellingPrice: product.salePrice,
+            currentStock: stockItem ? stockItem.quantityAvailable : 0,
+            code: product.sku,
+            size: product.size,
+            color: product.color,
+            brand: product.brand
+        });
+        setSearchTerm(product.name);
         setQuantity(1);
         setNotFound(false);
     };
+
+    // Quick Select Items: Show first few items that are actually in stock
+    const inStockMasterItems = productMaster
+        .filter(p => shopStock.some(s => s.productId === p._id && s.quantityAvailable > 0))
+        .slice(0, 6);
 
     return (
         <div className="space-y-4">
@@ -278,13 +287,13 @@ export default function ProductScanner({ onAddToCart }) {
             {/* ── Quick-Select Product Chips ── */}
             <div className="flex flex-wrap gap-2">
                 <span className="text-[10px] font-bold text-muted-foreground uppercase self-center mr-1">Quick Add:</span>
-                {shopItems.slice(0, 6).map(item => (
+                {inStockMasterItems.map(item => (
                     <button
-                        key={item.id}
+                        key={item._id}
                         onClick={() => quickSelectProduct(item)}
                         className="text-xs font-medium px-3 py-1.5 bg-muted/50 text-muted-foreground border border-border rounded-lg hover:bg-primary/5 hover:text-primary hover:border-primary/30 transition-all"
                     >
-                        {item.productName}
+                        {item.name}
                     </button>
                 ))}
             </div>

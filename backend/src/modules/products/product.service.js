@@ -9,12 +9,12 @@ const { withTransaction } = require('../../services/transaction.service');
 const generateSKU = async () => {
     const year = new Date().getFullYear();
     const prefix = `SKU-${year}-`;
-    
+
     const lastProduct = await Product.findOne(
         { sku: new RegExp(`^${prefix}`) },
         { sku: 1 }
     ).sort({ sku: -1 });
-    
+
     let nextNum = 1;
     if (lastProduct && lastProduct.sku) {
         const lastNum = parseInt(lastProduct.sku.split('-')[2]);
@@ -22,7 +22,7 @@ const generateSKU = async () => {
             nextNum = lastNum + 1;
         }
     }
-    
+
     return `${prefix}${nextNum.toString().padStart(5, '0')}`;
 };
 
@@ -32,14 +32,14 @@ const generateSKU = async () => {
 const generateBarcode = async () => {
     let unique = false;
     let barcode;
-    
+
     while (!unique) {
         // Generate 12-digit numeric barcode
         barcode = Math.floor(100000000000 + Math.random() * 900000000000).toString();
         const existing = await Product.findOne({ barcode });
         if (!existing) unique = true;
     }
-    
+
     return barcode;
 };
 
@@ -52,7 +52,7 @@ const createProductsFromBatch = async (batch, metadata, session) => {
     const creations = batch.sizeBreakdown.map(async (item) => {
         const sku = await generateSKU();
         const barcode = await generateBarcode();
-        
+
         const product = new Product({
             name,
             sku,
@@ -95,9 +95,9 @@ const createProductsFromBatch = async (batch, metadata, session) => {
  */
 const getAllProducts = async (query) => {
     const { page = 1, limit = 10, search, category, size, isActive } = query;
-    
+
     const filter = { isDeleted: false };
-    
+
     if (search) {
         filter.$or = [
             { name: { $regex: search, $options: 'i' } },
@@ -105,13 +105,13 @@ const getAllProducts = async (query) => {
             { barcode: { $regex: search, $options: 'i' } }
         ];
     }
-    
+
     if (category) filter.category = category;
     if (size) filter.size = size;
     if (isActive !== undefined) filter.isActive = isActive === 'true';
 
     const skip = (page - 1) * limit;
-    
+
     const [products, total] = await Promise.all([
         Product.find(filter)
             .sort({ createdAt: -1 })
@@ -181,6 +181,39 @@ const deleteProduct = async (id) => {
     return product;
 };
 
+/**
+ * Create a product manually
+ */
+const createProduct = async (productData, userId) => {
+    return await withTransaction(async (session) => {
+        if (!productData.sku) productData.sku = await generateSKU();
+        if (!productData.barcode) productData.barcode = await generateBarcode();
+
+        const product = new Product({
+            ...productData,
+            createdBy: userId,
+            isActive: true
+        });
+
+        await product.save({ session });
+
+        // Record stock history
+        if (product.factoryStock > 0) {
+            await StockHistory.create([{
+                productId: product._id,
+                type: StockHistoryType.IN,
+                quantityBefore: 0,
+                quantityChange: product.factoryStock,
+                quantityAfter: product.factoryStock,
+                notes: 'Manual initial stock entry',
+                performedBy: userId
+            }], { session });
+        }
+
+        return product;
+    });
+};
+
 module.exports = {
     generateSKU,
     generateBarcode,
@@ -190,5 +223,6 @@ module.exports = {
     getProductById,
     updateProduct,
     toggleStatus,
-    deleteProduct
+    deleteProduct,
+    createProduct
 };

@@ -40,7 +40,14 @@ const authService = {
         }
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
     },
+
+    getCurrentUser: () => {
+        const user = localStorage.getItem('auth_user') || localStorage.getItem('user');
+        return user ? JSON.parse(user) : null;
+    }
 };
 
 export default authService;

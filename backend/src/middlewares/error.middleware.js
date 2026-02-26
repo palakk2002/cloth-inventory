@@ -1,6 +1,8 @@
 const logger = require('../config/logger');
+const fs = require('fs');
 
 const errorHandler = (err, req, res, next) => {
+    fs.appendFileSync('c:/Users/palak/OneDrive/Desktop/cloth-inventory/backend/temp_err.log', new Date().toISOString() + ' ' + err.message + '\n' + err.stack + '\n\n');
     logger.error(err.message, { stack: err.stack, url: req.originalUrl });
 
     // Mongoose duplicate key error

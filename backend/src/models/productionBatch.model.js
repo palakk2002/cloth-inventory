@@ -69,7 +69,7 @@ productionBatchSchema.pre('save', function (next) {
 });
 
 // Indexes
-productionBatchSchema.index({ batchNumber: 1 });
+// productionBatchSchema.index({ batchNumber: 1 }); // unique: true handles this
 productionBatchSchema.index({ fabricId: 1 });
 productionBatchSchema.index({ stage: 1 });
 productionBatchSchema.index({ status: 1 });

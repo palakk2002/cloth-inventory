@@ -52,21 +52,21 @@ export default function Dashboard() {
 
     // Existing Module Stats
     const totalFabrics = state.fabrics.length;
-    const totalFabricProductsStock = state.fabricProducts.reduce((acc, p) => acc + p.stock, 0);
+    const totalFabricProductsStock = state.productMaster.reduce((acc, p) => acc + (p.factoryStock || 0), 0);
     const totalShops = state.shops.length;
 
     // Dispatch Stats
-    const totalDispatched = state.dispatches.reduce((a, d) => a + d.quantitySent, 0);
+    const totalDispatched = state.dispatches.reduce((a, d) => a + (d.quantitySent || 0), 0);
     const totalDelivered = state.dispatches.filter(d => d.status === 'Delivered').length;
     const pendingDeliveries = state.dispatches.filter(d => d.status === 'Pending').length;
 
     // Revenue from store bills
-    const totalRevenue = state.storeBills.reduce((a, b) => a + b.totalAmount, 0);
+    const totalRevenue = state.storeBills.reduce((a, b) => a + (b.totalAmount || 0), 0);
 
     // Chart Data
     const stockOverviewData = state.products.map(p => ({
         name: p.name,
-        stock: p.variants.reduce((acc, v) => acc + v.stock, 0)
+        stock: p.variants.reduce((acc, v) => acc + (v.stock || 0), 0)
     }));
 
     const categoryData = state.categories.map(cat => ({
@@ -78,10 +78,10 @@ export default function Dashboard() {
 
     // Shop-wise stock
     const shopStockData = state.shops.map(shop => {
-        const stockItems = state.shopStock.filter(s => s.shopId === shop.id);
-        const totalStock = stockItems.reduce((a, s) => a + s.currentStock, 0);
-        const shopBills = state.storeBills.filter(b => b.shopId === shop.id);
-        const shopRevenue = shopBills.reduce((a, b) => a + b.totalAmount, 0);
+        const stockItems = state.shopStock.filter(s => s.storeId === shop._id);
+        const totalStock = stockItems.reduce((a, s) => a + (s.quantityAvailable || 0), 0);
+        const shopBills = state.storeBills.filter(b => b.shopId === shop._id);
+        const shopRevenue = shopBills.reduce((a, b) => a + (b.totalAmount || 0), 0);
         const shopSalesCount = shopBills.length;
         return { ...shop, totalStock, shopRevenue, shopSalesCount };
     });
@@ -280,7 +280,7 @@ export default function Dashboard() {
                         </thead>
                         <tbody className="divide-y divide-border">
                             {shopStockData.map((shop) => (
-                                <tr key={shop.id} className="hover:bg-muted/30 transition-colors">
+                                <tr key={shop._id} className="hover:bg-muted/30 transition-colors">
                                     <td className="px-6 py-4 text-sm font-bold">{shop.name}</td>
                                     <td className="px-6 py-4 text-sm font-medium">{shop.totalStock} pcs</td>
                                     <td className="px-6 py-4 text-sm font-medium">{shop.shopSalesCount}</td>

@@ -3,10 +3,10 @@ const { ReturnType, ReturnStatus } = require('../core/enums');
 
 const returnSchema = new mongoose.Schema(
     {
-        returnNumber: { 
-            type: String, 
-            unique: true, 
-            trim: true 
+        returnNumber: {
+            type: String,
+            unique: true,
+            trim: true
         },
         type: {
             type: String,
@@ -55,7 +55,7 @@ const returnSchema = new mongoose.Schema(
 );
 
 // Indexes
-returnSchema.index({ returnNumber: 1 });
+// returnSchema.index({ returnNumber: 1 }); // unique: true handles this
 returnSchema.index({ type: 1 });
 returnSchema.index({ storeId: 1 });
 returnSchema.index({ productId: 1 });

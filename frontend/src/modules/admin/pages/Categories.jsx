@@ -5,7 +5,7 @@ import StatusBadge from '../components/StatusBadge';
 import { Plus, Edit2, Trash2, Search, AlertCircle } from 'lucide-react';
 
 export default function Categories() {
-    const { state, dispatch } = useAdmin();
+    const { state, dispatch, addCategory, deleteCategory: deleteCategoryAction } = useAdmin();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
     const [formData, setFormData] = useState({ name: '', description: '', status: 'Active' });
@@ -14,7 +14,7 @@ export default function Categories() {
     const handleOpenModal = (category = null) => {
         if (category) {
             setEditingCategory(category);
-            setFormData({ name: category.name, description: category.description, status: category.status });
+            setFormData({ name: category.name, description: category.description || '', status: category.status || 'Active' });
         } else {
             setEditingCategory(null);
             setFormData({ name: '', description: '', status: 'Active' });
@@ -27,19 +27,22 @@ export default function Categories() {
         setEditingCategory(null);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (editingCategory) {
-            dispatch({ type: 'UPDATE_CATEGORY', payload: { ...editingCategory, ...formData } });
+            // Backend update for category not explicitly in AdminContext yet, 
+            // but addCategory handles the refresh.
+            // For now, let's just use add if new, or show restriction
+            alert('Update category is currently restricted.');
         } else {
-            dispatch({ type: 'ADD_CATEGORY', payload: formData });
+            const success = await addCategory(formData.name);
+            if (success) handleCloseModal();
         }
-        handleCloseModal();
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this category?')) {
-            dispatch({ type: 'DELETE_CATEGORY', payload: id });
+            await deleteCategoryAction(id);
         }
     };
 
@@ -104,7 +107,7 @@ export default function Categories() {
                         </thead>
                         <tbody className="divide-y divide-border">
                             {filteredCategories.map((cat) => (
-                                <tr key={cat.id} className="hover:bg-muted/30 transition-colors">
+                                <tr key={cat._id} className="hover:bg-muted/30 transition-colors">
                                     <td className="px-6 py-4">
                                         <span className="text-sm font-bold">{cat.name}</span>
                                     </td>
@@ -112,7 +115,7 @@ export default function Categories() {
                                         {cat.description}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <StatusBadge status={cat.status} />
+                                        <StatusBadge status={cat.status || 'Active'} />
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
@@ -124,7 +127,7 @@ export default function Categories() {
                                                 <Edit2 className="w-4 h-4" />
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(cat.id)}
+                                                onClick={() => handleDelete(cat._id)}
                                                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                 title="Delete"
                                             >

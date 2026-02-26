@@ -3,11 +3,11 @@ import api from './api';
 const productService = {
     getAll: async () => {
         const response = await api.get('/products');
-        return response.data;
+        return response.data.products || [];
     },
     create: async (productData) => {
         const response = await api.post('/products', productData);
-        return response.data;
+        return response.data.product;
     },
     update: async (id, productData) => {
         const response = await api.put(`/products/${id}`, productData);

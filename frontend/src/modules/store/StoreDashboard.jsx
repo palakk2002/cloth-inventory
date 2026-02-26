@@ -9,8 +9,8 @@ import BillModal from './BillModal';
 import HoldBills from './HoldBills';
 
 export default function StoreDashboard() {
-    const { state, dispatch } = useAdmin();
-    const CURRENT_SHOP_ID = state.user?.shopId || 1;
+    const { state, dispatch, createSale } = useAdmin();
+    const CURRENT_SHOP_ID = state.user?.shopId || state.user?._id; // Preferred shopId from user object
     const CURRENT_SHOP_NAME = state.user?.shopName || 'Cloth Inventory';
 
     const [cartItems, setCartItems] = useState([]);
@@ -19,26 +19,23 @@ export default function StoreDashboard() {
     const [holdBills, setHoldBills] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [billData, setBillData] = useState(null);
-    const [billCounter, setBillCounter] = useState(
-        state.storeBills.filter(b => b.shopId === CURRENT_SHOP_ID).length + 1
-    );
+    const [billCounter, setBillCounter] = useState(1);
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
 
-    // Today's summary from storeBills for this shop
-    const today = new Date().toISOString().split('T')[0];
-    const todayBills = state.storeBills.filter(b => b.shopId === CURRENT_SHOP_ID && b.date === today);
+    // Today's summary – using state.storeBills which is fetched from backend
     const todaysSummary = {
-        totalOrders: todayBills.length,
-        totalRevenue: todayBills.reduce((a, b) => a + b.totalAmount, 0),
-        totalItems: todayBills.reduce((a, b) => a + b.items.reduce((x, i) => x + i.quantity, 0), 0),
+        totalOrders: state.storeBills.length,
+        totalRevenue: state.storeBills.reduce((a, b) => a + (b.totalAmount || 0), 0),
+        totalItems: state.storeBills.reduce((a, b) => a + (b.items?.reduce((x, i) => x + i.quantity, 0) || 0), 0),
     };
 
     // ---- Core Logic ----
 
     const addToCart = (product) => {
         setCartItems((prev) => {
-            const existing = prev.findIndex((item) => item.fabricProductId === product.fabricProductId);
+            // Backend products might used _id or fabricProductId
+            const existing = prev.findIndex((item) => (item.fabricProductId === product.fabricProductId) || (item._id === product._id));
             if (existing >= 0) {
                 const updated = [...prev];
                 updated[existing] = {
@@ -74,69 +71,49 @@ export default function StoreDashboard() {
         return { subtotal, gst, grandTotal: Math.max(0, grandTotal) };
     };
 
-    const generateBill = () => {
+    const generateBill = async () => {
         if (cartItems.length === 0) return;
         const { subtotal, gst, grandTotal } = calculateTotals();
         const now = new Date();
-        const billId = `BILL-${now.getFullYear()}-${String(billCounter).padStart(4, '0')}`;
+        const billId = `BILL-${now.getFullYear()}-${String(Date.now()).slice(-4)}`;
 
-        const billItems = cartItems.map(item => ({
-            fabricProductId: item.fabricProductId,
+        const saleItems = cartItems.map(item => ({
+            productId: item.fabricProductId || item._id, // backend expects productId
             productName: item.name,
             quantity: item.quantity,
-            pricePerUnit: item.price,
+            price: item.price,
             total: item.price * item.quantity,
         }));
 
-        const data = {
-            billId,
-            dateTime: now.toLocaleString('en-IN', {
-                day: '2-digit', month: 'short', year: 'numeric',
-                hour: '2-digit', minute: '2-digit', hour12: true,
-            }),
+        const salePayload = {
+            shopId: CURRENT_SHOP_ID,
             customerName: customerName || 'Walk-in Customer',
-            staffName: 'Rahul Sharma',
-            items: billItems,
+            customerPhone: customerPhone || '',
+            items: saleItems,
             subtotal,
             gst,
             discount,
-            grandTotal,
+            totalAmount: grandTotal,
             paymentMethod,
+            transactionId: paymentMethod !== 'cash' ? `${paymentMethod.toUpperCase()}-${Date.now()}` : null
         };
 
-        // Save to global context
-        dispatch({
-            type: 'ADD_STORE_BILL',
-            payload: {
+        const res = await createSale(salePayload);
+
+        if (res.success) {
+            setBillData({
+                ...salePayload,
                 billId,
-                shopId: CURRENT_SHOP_ID,
-                shopName: CURRENT_SHOP_NAME,
-                customerName: customerName || 'Walk-in Customer',
-                customerPhone: customerPhone || '',
-                items: billItems,
-                subtotal,
-                gst,
-                discount,
-                totalAmount: grandTotal,
-                date: now.toISOString().split('T')[0],
-                time: now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
-                paymentMethod,
-                paymentStatus: 'Paid',
-                transactionId: paymentMethod !== 'cash'
-                    ? `${paymentMethod.toUpperCase()}-TXN-${Date.now().toString().slice(-7)}`
-                    : null,
-            }
-        });
-
-        setBillData(data);
-        setShowModal(true);
-        setBillCounter((c) => c + 1);
-
-        setCartItems([]);
-        setDiscount(0);
-        setPaymentMethod('cash');
-        setCustomerName('');
-        setCustomerPhone('');
+                dateTime: now.toLocaleString(),
+                staffName: state.user?.name || 'Staff'
+            });
+            setShowModal(true);
+            setCartItems([]);
+            setDiscount(0);
+            setPaymentMethod('cash');
+            setCustomerName('');
+            setCustomerPhone('');
+        }
     };
 
     const holdCurrentBill = () => {

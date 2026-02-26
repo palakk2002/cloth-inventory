@@ -54,7 +54,7 @@ const toggleStatus = async (req, res, next) => {
     try {
         const { isActive } = req.body;
         if (typeof isActive !== 'boolean') return sendError(res, 'isActive must be a boolean', 400);
-        
+
         const product = await productService.toggleStatus(req.params.id, isActive);
         return sendSuccess(res, { product }, `Product status changed to ${isActive ? 'Active' : 'Inactive'}`);
     } catch (err) {
@@ -71,11 +71,21 @@ const deleteProduct = async (req, res, next) => {
     }
 };
 
+const createProduct = async (req, res, next) => {
+    try {
+        const product = await productService.createProduct(req.body, req.user._id);
+        return sendSuccess(res, { product }, 'Product created successfully', 201);
+    } catch (err) {
+        return sendError(res, err.message, 400);
+    }
+};
+
 module.exports = {
     getAllProducts,
     getProductById,
     getProductByBarcode,
     updateProduct,
     toggleStatus,
-    deleteProduct
+    deleteProduct,
+    createProduct
 };

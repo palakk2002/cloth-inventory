@@ -9,6 +9,7 @@ const router = express.Router();
 router.use(protect);
 
 router.get('/', productController.getAllProducts);
+router.post('/', requireAdmin, productController.createProduct);
 router.get('/:id', productController.getProductById);
 router.get('/barcode/:barcode', productController.getProductByBarcode);
 
