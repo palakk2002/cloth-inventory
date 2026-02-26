@@ -1,11 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Search, Bell, Menu, User, Settings, LogOut, Package, AlertTriangle } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function Navbar({ onMenuClick }) {
     const navigate = useNavigate();
+    const { user, logout } = useAuth();
     const [showNotifications, setShowNotifications] = useState(false);
     const [showProfile, setShowProfile] = useState(false);
+
+    const handleLogout = async () => {
+        if (window.confirm('Are you sure you want to log out?')) {
+            await logout();
+            navigate('/admin/login');
+        }
+        setShowProfile(false);
+    };
+
+    const displayName = user?.name || 'Admin';
+    const displayEmail = user?.email || '';
+    const displayInitial = displayName.charAt(0).toUpperCase();
 
     const notifications = [
         { id: 1, title: 'Low Stock Alert', desc: 'White Shirt (XL) is below 5 units', icon: AlertTriangle, color: 'text-orange-500', time: '2 min ago' },
@@ -86,19 +100,19 @@ export default function Navbar({ onMenuClick }) {
                         className="flex items-center gap-3 pl-4 border-l border-border hover:opacity-80 transition-opacity"
                     >
                         <div className="text-right hidden sm:block">
-                            <p className="text-sm font-bold">Palak</p>
+                            <p className="text-sm font-bold">{displayName}</p>
                             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Admin</p>
                         </div>
                         <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold shadow-md shadow-primary/20">
-                            P
+                            {displayInitial}
                         </div>
                     </button>
 
                     {showProfile && (
                         <div className="absolute right-0 mt-2 w-56 bg-white border border-border rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                             <div className="p-4 bg-muted/30 border-b border-border">
-                                <p className="text-sm font-bold">Palak</p>
-                                <p className="text-xs text-muted-foreground">palak@example.com</p>
+                                <p className="text-sm font-bold">{displayName}</p>
+                                <p className="text-xs text-muted-foreground">{displayEmail}</p>
                             </div>
                             <div className="p-2">
                                 <button
@@ -108,10 +122,7 @@ export default function Navbar({ onMenuClick }) {
                                     <Settings className="w-4 h-4 text-muted-foreground" /> Settings
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        if (window.confirm('Log out?')) window.location.href = '/';
-                                        setShowProfile(false);
-                                    }}
+                                    onClick={handleLogout}
                                     className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
                                 >
                                     <LogOut className="w-4 h-4" /> Logout

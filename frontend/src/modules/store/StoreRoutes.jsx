@@ -5,6 +5,7 @@ import StoreDashboard from './StoreDashboard';
 import ReceiveStock from './ReceiveStock';
 import ShopStock from './ShopStock';
 import SalesHistory from './SalesHistory';
+import ProtectedRoute from '../../components/ProtectedRoute';
 
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -16,8 +17,15 @@ export default function StoreRoutes() {
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
 
-            {/* Main Store Routes with Layout */}
-            <Route path="/" element={<StoreLayout />}>
+            {/* Protected Store Routes with Layout */}
+            <Route
+                path="/"
+                element={
+                    <ProtectedRoute role="store_staff">
+                        <StoreLayout />
+                    </ProtectedRoute>
+                }
+            >
                 <Route index element={<Navigate to="pos" replace />} />
                 <Route path="pos" element={<StoreDashboard />} />
                 <Route path="receive" element={<ReceiveStock />} />

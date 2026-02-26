@@ -1,0 +1,19 @@
+const express = require('express');
+const reportController = require('./report.controller');
+const { protect } = require('../../middlewares/auth.middleware');
+const { requireAdmin } = require('../../middlewares/role.middleware');
+
+const router = express.Router();
+
+router.use(protect);
+router.use(requireAdmin); // Reports are admin-only
+
+router.get('/daily-sales', reportController.getDailySales);
+router.get('/monthly-sales', reportController.getMonthlySales);
+router.get('/store-wise', reportController.getStoreWiseSales);
+router.get('/product-wise', reportController.getProductWiseSales);
+router.get('/fabric-consumption', reportController.getFabricConsumption);
+router.get('/low-stock', reportController.getLowStockReport);
+router.get('/returns', reportController.getReturnSummary);
+
+module.exports = router;
