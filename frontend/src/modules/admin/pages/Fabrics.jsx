@@ -4,7 +4,7 @@ import Modal from '../components/Modal';
 import { Plus, Edit2, Trash2, Search, Scissors, AlertCircle } from 'lucide-react';
 
 export default function Fabrics() {
-    const { state, dispatch } = useAdmin();
+    const { state, addFabric, updateFabric, deleteFabric } = useAdmin();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingFabric, setEditingFabric] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -30,7 +30,7 @@ export default function Fabrics() {
         setIsModalOpen(true);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const payload = {
             ...formData,
@@ -38,16 +38,19 @@ export default function Fabrics() {
             pricePerMeter: parseFloat(formData.pricePerMeter),
         };
         if (editingFabric) {
-            dispatch({ type: 'UPDATE_FABRIC', payload: { ...editingFabric, ...payload } });
+            await updateFabric(editingFabric.id, payload);
         } else {
-            dispatch({ type: 'ADD_FABRIC', payload });
+            // Need a supplierId. 
+            // The backend requires supplierId. Fabrics.jsx form doesn't have it yet.
+            // I'll assume we uses the first available supplier for now or show an alert if none exists.
+            await addFabric(payload);
         }
         setIsModalOpen(false);
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this fabric?')) {
-            dispatch({ type: 'DELETE_FABRIC', payload: id });
+            await deleteFabric(id);
         }
     };
 

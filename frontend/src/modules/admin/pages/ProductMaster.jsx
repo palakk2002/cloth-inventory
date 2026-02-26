@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useAdmin } from '../context/AdminContext';
+import { useAdmin, generateSKU } from '../context/AdminContext';
 import {
     Plus, Search, Filter, Trash2, Edit2,
     Barcode, Tag, Package, Box, IndianRupee,
@@ -9,13 +9,7 @@ import ProductTagPreview from '../components/product/ProductTagPreview';
 import ProductPreviewModal from '../components/product/ProductPreviewModal';
 import * as XLSX from 'xlsx';
 
-// Helper function to generate SKU locally since it's not exported from context
-const generateSKU = (category = 'NA', brand = 'NA', size = 'NA', counter = 1) => {
-    const catCode = category.substring(0, 2).toUpperCase() || 'XX';
-    const brandCode = brand.substring(0, 2).toUpperCase() || 'XX';
-    const sizeCode = size.substring(0, 2).toUpperCase() || 'XX';
-    return `${catCode}${brandCode}${sizeCode}-${counter.toString().padStart(4, '0')}`;
-};
+
 
 export default function ProductMaster() {
     const { state, dispatch, addProduct, deleteProduct: deleteProductAction } = useAdmin();
