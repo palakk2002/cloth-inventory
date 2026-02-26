@@ -8,11 +8,10 @@ import PaymentSection from './PaymentSection';
 import BillModal from './BillModal';
 import HoldBills from './HoldBills';
 
-const CURRENT_SHOP_ID = 1;
-const CURRENT_SHOP_NAME = 'Cloth Inventory';
-
 export default function StoreDashboard() {
     const { state, dispatch } = useAdmin();
+    const CURRENT_SHOP_ID = state.user?.shopId || 1;
+    const CURRENT_SHOP_NAME = state.user?.shopName || 'Cloth Inventory';
 
     const [cartItems, setCartItems] = useState([]);
     const [paymentMethod, setPaymentMethod] = useState('cash');
@@ -182,6 +181,14 @@ export default function StoreDashboard() {
 
     return (
         <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {state.loading && (
+                <div className="fixed inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-primary font-bold animate-pulse">Initializing POS System...</p>
+                    </div>
+                </div>
+            )}
             {/* Today's Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {summaryCards.map((card) => (

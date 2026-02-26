@@ -5,6 +5,7 @@ import StoreDashboard from './StoreDashboard';
 import ReceiveStock from './ReceiveStock';
 import ShopStock from './ShopStock';
 import SalesHistory from './SalesHistory';
+import InvoiceHistory from './InvoiceHistory';
 
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -23,6 +24,7 @@ export default function StoreRoutes() {
                 <Route path="receive" element={<ReceiveStock />} />
                 <Route path="stock" element={<ShopStock />} />
                 <Route path="sales-history" element={<SalesHistory />} />
+                <Route path="invoice-history" element={<InvoiceHistory />} />
                 <Route path="*" element={<Navigate to="pos" replace />} />
             </Route>
         </Routes>

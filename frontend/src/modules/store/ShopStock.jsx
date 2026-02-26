@@ -2,11 +2,10 @@ import React from 'react';
 import { useAdmin } from '../admin/context/AdminContext';
 import { Package, AlertTriangle, TrendingDown, ArrowDownToLine, ShoppingBag } from 'lucide-react';
 
-const CURRENT_SHOP_ID = 1;
-const DEFAULT_LOW_THRESHOLD = 5;
-
 export default function ShopStock() {
     const { state } = useAdmin();
+    const CURRENT_SHOP_ID = state.user?.shopId || 1;
+    const DEFAULT_LOW_THRESHOLD = 5;
 
     const shopItems = state.shopStock.filter(s => s.shopId === CURRENT_SHOP_ID);
 
@@ -49,6 +48,14 @@ export default function ShopStock() {
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {state.loading && (
+                <div className="fixed inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-primary font-bold animate-pulse">Loading Inventory...</p>
+                    </div>
+                </div>
+            )}
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>

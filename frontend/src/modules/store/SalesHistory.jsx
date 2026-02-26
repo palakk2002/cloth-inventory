@@ -114,6 +114,7 @@ function BillDetailModal({ isOpen, onClose, bill }) {
 
 export default function SalesHistory() {
     const { state } = useAdmin();
+    const CURRENT_SHOP_ID = state.user?.shopId || 1;
     const [searchTerm, setSearchTerm] = useState('');
     const [dateFilter, setDateFilter] = useState('');
     const [selectedBill, setSelectedBill] = useState(null);
@@ -159,6 +160,14 @@ export default function SalesHistory() {
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {state.loading && (
+                <div className="fixed inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-primary font-bold animate-pulse">Loading Sales Records...</p>
+                    </div>
+                </div>
+            )}
             {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold tracking-tight">Sales History</h1>

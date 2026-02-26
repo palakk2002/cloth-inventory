@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAdmin } from '../context/AdminContext';
 import Modal from '../components/Modal';
 import StatusBadge from '../components/StatusBadge';
-import { Plus, Edit2, Trash2, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, AlertCircle } from 'lucide-react';
 
 export default function Categories() {
     const { state, dispatch } = useAdmin();
@@ -49,6 +49,22 @@ export default function Categories() {
 
     return (
         <div className="space-y-6">
+            {state.loading && (
+                <div className="fixed inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-primary font-bold animate-pulse">Checking Categories...</p>
+                    </div>
+                </div>
+            )}
+
+            {state.error && (
+                <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl mb-6 flex items-center gap-3">
+                    <AlertCircle size={20} />
+                    <p>{state.error}</p>
+                </div>
+            )}
+
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Categories</h1>

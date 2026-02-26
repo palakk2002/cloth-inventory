@@ -31,16 +31,17 @@ export default function Production() {
         }
 
         dispatch({
-            type: 'PRODUCE',
+            type: 'ADD_PRODUCTION_BATCH',
             payload: {
                 fabricProductId: selectedProduct.id,
+                productName: selectedProduct.name,
                 fabricId: linkedFabric.id,
                 quantity: parseInt(quantity),
                 meterUsed: totalMeterRequired,
             }
         });
 
-        setSuccess(`Successfully produced ${quantity} units of ${selectedProduct.name}!`);
+        setSuccess(`Successfully initiated production for ${quantity} units of ${selectedProduct.name}! Move to next stage in Workflow.`);
         setSelectedProductId('');
         setQuantity('');
     };

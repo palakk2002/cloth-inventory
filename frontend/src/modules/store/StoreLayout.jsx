@@ -7,6 +7,7 @@ const storeNavItems = [
     { icon: Package, label: 'Shop Stock', path: '/store/stock' },
     { icon: Receipt, label: 'Billing (POS)', path: '/store/pos' },
     { icon: History, label: 'Sales History', path: '/store/sales-history' },
+    { icon: Receipt, label: 'Invoice History', path: '/store/invoice-history' },
 ];
 
 export default function StoreLayout() {

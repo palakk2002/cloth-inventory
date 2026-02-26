@@ -46,3 +46,7 @@ export default function ProductBarcode({ productData, width = 1.0, height = 65 }
         </div>
     );
 }
+
+
+
+

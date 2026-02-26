@@ -19,6 +19,9 @@ import CustomerManagement from '../pages/CustomerManagement';
 import SalesOverview from '../pages/SalesOverview';
 import ProductMaster from '../pages/ProductMaster';
 import ProductPreviewPage from '../pages/ProductPreviewPage';
+import MaterialReceived from '../pages/MaterialReceived';
+import Cutting from '../pages/Cutting';
+import Finishing from '../pages/Finishing';
 
 export default function AdminRoutes() {
     return (
@@ -40,6 +43,9 @@ export default function AdminRoutes() {
                 <Route path="dispatch" element={<Dispatch />} />
                 <Route path="sales-overview" element={<SalesOverview />} />
                 <Route path="product-master" element={<ProductMaster />} />
+                <Route path="material-received" element={<MaterialReceived />} />
+                <Route path="cutting" element={<Cutting />} />
+                <Route path="finishing" element={<Finishing />} />
                 <Route path="customer-management" element={<CustomerManagement />} />
                 <Route path="staff" element={<Staff />} />
                 <Route path="reports" element={<Reports />} />

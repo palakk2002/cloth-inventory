@@ -1,16 +1,18 @@
 import React from 'react';
 import { useAdmin } from '../admin/context/AdminContext';
-import { PackageCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { PackageCheck, AlertCircle, CheckCircle2, Receipt } from 'lucide-react';
 import { useState } from 'react';
-
-const CURRENT_SHOP_ID = 1; // Hardcoded shop for now
+import InvoicePreview from '../admin/components/InvoicePreview';
 
 export default function ReceiveStock() {
     const { state, dispatch } = useAdmin();
+    const CURRENT_SHOP_ID = state.user?.shopId || 1;
     const [receivingDispatch, setReceivingDispatch] = useState(null);
     const [receivedQty, setReceivedQty] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [selectedInvoice, setSelectedInvoice] = useState(null);
+    const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
 
     // Only show dispatches for this shop
     const shopDispatches = state.dispatches.filter(d => d.shopId === CURRENT_SHOP_ID);
@@ -44,22 +46,61 @@ export default function ReceiveStock() {
         const remaining = receivingDispatch.quantitySent - receivingDispatch.quantityReceived;
         if (qty > remaining) { setError(`Cannot receive more than remaining (${remaining} pcs).`); return; }
 
-        dispatch({ type: 'RECEIVE_DISPATCH', payload: { dispatchId: receivingDispatch.id, receivedQty: qty } });
-        setSuccess(`Received ${qty} pcs of ${receivingDispatch.productName}! Stock updated.`);
+        const diff = receivingDispatch.quantitySent - (receivingDispatch.quantityReceived + qty);
 
-        // Update local reference
-        setReceivingDispatch({
-            ...receivingDispatch,
-            quantityReceived: receivingDispatch.quantityReceived + qty,
-        });
+        try {
+            // Real API Integration:
+            // await dispatchService.receive(receivingDispatch.id, { 
+            //     receivedQty: qty, 
+            //     isPartial: qty < remaining 
+            // });
+
+            dispatch({
+                type: 'RECEIVE_DISPATCH',
+                payload: {
+                    dispatchId: receivingDispatch.id,
+                    receivedQty: qty,
+                    isPartial: qty < remaining,
+                    difference: remaining - qty
+                }
+            });
+
+            setSuccess(`Received ${qty} pcs of ${receivingDispatch.productName}! Stock updated. ${qty < remaining ? `(Partial: ${remaining - qty} missing)` : ''}`);
+
+            // Update local reference
+            setReceivingDispatch({
+                ...receivingDispatch,
+                quantityReceived: receivingDispatch.quantityReceived + qty,
+            });
+        } catch (err) {
+            setError('Failed to update receipt on server.');
+        }
     };
 
     // Summary
     const pendingCount = shopDispatches.filter(d => d.status !== 'Delivered').length;
     const totalReceived = shopDispatches.reduce((a, d) => a + d.quantityReceived, 0);
 
+    const handleViewInvoice = (dispatchId) => {
+        const invoice = state.invoices.find(inv => inv.id === `INV-${dispatchId}`);
+        if (invoice) {
+            setSelectedInvoice(invoice);
+            setIsInvoiceOpen(true);
+        } else {
+            alert("Invoice not found for this dispatch.");
+        }
+    };
+
     return (
         <div className="space-y-6">
+            {state.loading && (
+                <div className="fixed inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-primary font-bold animate-pulse">Loading Dispatches...</p>
+                    </div>
+                </div>
+            )}
             <div>
                 <h1 className="text-2xl font-bold tracking-tight">Receive Stock</h1>
                 <p className="text-muted-foreground">View dispatches from factory and confirm receiving</p>
@@ -185,7 +226,21 @@ export default function ReceiveStock() {
                                             </button>
                                         )}
                                         {d.status === 'Delivered' && (
-                                            <span className="text-xs text-muted-foreground">Completed</span>
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full w-fit">VERIFIED FULL</span>
+                                                <button
+                                                    onClick={() => handleViewInvoice(d.id)}
+                                                    className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                                                >
+                                                    <Receipt className="w-3 h-3" /> View Invoice
+                                                </button>
+                                            </div>
+                                        )}
+                                        {d.status === 'Partially Delivered' && (
+                                            <button onClick={() => openReceive(d)}
+                                                className="text-sm font-semibold text-orange-600 hover:underline flex items-center gap-1">
+                                                <PackageCheck className="w-4 h-4" /> Receive Rest
+                                            </button>
                                         )}
                                     </td>
                                 </tr>
@@ -201,6 +256,12 @@ export default function ReceiveStock() {
                     </table>
                 </div>
             </div>
+            {/* Invoice Preview Modal */}
+            <InvoicePreview
+                isOpen={isInvoiceOpen}
+                onClose={() => setIsInvoiceOpen(false)}
+                invoice={selectedInvoice}
+            />
         </div>
     );
 }

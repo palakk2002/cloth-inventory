@@ -88,6 +88,26 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {state.loading && (
+                <div className="fixed inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-primary font-bold animate-pulse">Fetching Dashboard Stats...</p>
+                    </div>
+                </div>
+            )}
+
+            {state.error && (
+                <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl mb-6 flex items-center gap-3">
+                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center shrink-0">
+                        <AlertTriangle className="w-6 h-6 text-red-600" />
+                    </div>
+                    <div>
+                        <p className="font-bold">Data Fetch Error</p>
+                        <p className="text-sm opacity-90">{state.error}</p>
+                    </div>
+                </div>
+            )}
 
             {/* Dashboard Stat Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-fr">

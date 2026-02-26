@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAdmin } from '../context/AdminContext';
-import { Send, AlertCircle, CheckCircle2, Search } from 'lucide-react';
+import { Send, AlertCircle, CheckCircle2, Search, Receipt } from 'lucide-react';
+import InvoicePreview from '../components/InvoicePreview';
 
 export default function Dispatch() {
     const { state, dispatch } = useAdmin();
@@ -11,6 +12,8 @@ export default function Dispatch() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
+    const [generatedInvoice, setGeneratedInvoice] = useState(null);
+    const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
 
     const selectedProduct = state.fabricProducts.find(p => p.id === parseInt(fabricProductId));
 
@@ -32,14 +35,31 @@ export default function Dispatch() {
 
         const shop = state.shops.find(s => s.id === parseInt(shopId));
 
+        const dispatchId = Date.now();
         dispatch({
             type: 'ADD_DISPATCH',
             payload: {
+                id: dispatchId,
                 shopId: parseInt(shopId),
                 fabricProductId: selectedProduct.id,
                 quantitySent: qty,
             }
         });
+
+        const invoiceData = {
+            id: `INV-${dispatchId}`,
+            shopName: shop?.name || 'Shop',
+            productName: selectedProduct.name,
+            fabricType: selectedProduct.fabricType || 'N/A',
+            quantity: qty,
+            pricePerUnit: selectedProduct.sellingPrice || 0,
+            total: qty * (selectedProduct.sellingPrice || 0),
+            date: new Date().toISOString().split('T')[0]
+        };
+
+        dispatch({ type: 'ADD_INVOICE', payload: invoiceData });
+        setGeneratedInvoice(invoiceData);
+        setIsInvoiceOpen(true);
 
         setSuccess(`Dispatched ${qty} × ${selectedProduct.name} → ${shop?.name}`);
         setShopId('');
@@ -72,6 +92,22 @@ export default function Dispatch() {
 
     return (
         <div className="space-y-6">
+            {state.loading && (
+                <div className="fixed inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-primary font-bold animate-pulse">Checking Inventory & Dispatches...</p>
+                    </div>
+                </div>
+            )}
+
+            {state.error && (
+                <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl mb-6 flex items-center gap-3">
+                    <AlertCircle size={20} />
+                    <p>{state.error}</p>
+                </div>
+            )}
+
             <div>
                 <h1 className="text-2xl font-bold tracking-tight">Dispatch</h1>
                 <p className="text-muted-foreground">Dispatch finished products to your shops</p>
@@ -229,6 +265,12 @@ export default function Dispatch() {
                     </table>
                 </div>
             </div>
+            {/* Invoice Preview Modal */}
+            <InvoicePreview
+                isOpen={isInvoiceOpen}
+                onClose={() => setIsInvoiceOpen(false)}
+                invoice={generatedInvoice}
+            />
         </div>
     );
 }

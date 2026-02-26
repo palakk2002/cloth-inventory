@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Facebook, Twitter, Linkedin, Github, ArrowLeft, ShieldCheck } from 'lucide-react';
+import authService from '../../../../services/authService';
 
 export default function SlidingAuthContainer({ initialMode = 'signin' }) {
     const navigate = useNavigate();
@@ -26,19 +27,23 @@ export default function SlidingAuthContainer({ initialMode = 'signin' }) {
         setIsForgotPassword(false);
     };
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
 
-        setTimeout(() => {
+        try {
+            const data = await authService.login(email, password);
             setIsLoading(false);
-            if (email === 'clothinventory@gmail.com' && password === '1234') {
+            if (data.user.role === 'Admin') {
                 navigate('/admin/dashboard');
             } else {
-                setError('Invalid email or password');
+                navigate('/store/pos');
             }
-        }, 1500);
+        } catch (err) {
+            setIsLoading(false);
+            setError(err.response?.data?.message || 'Invalid email or password');
+        }
     };
 
     const handleForgotPasswordSubmit = (e) => {
