@@ -39,7 +39,7 @@ const productionBatchSchema = new mongoose.Schema(
         stage: {
             type: String,
             enum: Object.values(ProductionStage),
-            default: ProductionStage.CUTTING,
+            default: ProductionStage.MATERIAL_RECEIVED,
         },
         status: {
             type: String,

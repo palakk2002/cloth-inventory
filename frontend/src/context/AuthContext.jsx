@@ -20,6 +20,8 @@ export function AuthProvider({ children }) {
                     const data = await authService.getMe();
                     setToken(storedToken);
                     setUser(data.user);
+                    // Force update local storage so synchronous getters (like AdminContext initialState) see the new fields (like shopId)
+                    localStorage.setItem('auth_user', JSON.stringify(data.user));
                 } catch (_) {
                     // Token invalid / expired
                     localStorage.removeItem('auth_token');

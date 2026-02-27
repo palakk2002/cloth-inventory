@@ -4,36 +4,32 @@ import { Package, AlertTriangle, TrendingDown, ArrowDownToLine, ShoppingBag } fr
 
 export default function ShopStock() {
     const { state } = useAdmin();
-    const CURRENT_SHOP_ID = state.user?.shopId || 1;
+    const CURRENT_SHOP_ID = state.user?.shopId || state.user?.storeId;
     const DEFAULT_LOW_THRESHOLD = 5;
 
-    const shopItems = state.shopStock.filter(s => s.shopId === CURRENT_SHOP_ID);
+    // Filter by storeId (backend uses storeId)
+    const shopItems = (state.shopStock || []).filter(s =>
+        (s.storeId === CURRENT_SHOP_ID || s.storeId?._id === CURRENT_SHOP_ID)
+    );
 
     // Calculate total received per product from dispatches
-    const getReceivedQty = (fabricProductId) => {
+    const getReceivedQty = (productId) => {
         return state.dispatches
-            .filter(d => d.shopId === CURRENT_SHOP_ID && d.fabricProductId === fabricProductId)
-            .reduce((a, d) => a + d.quantityReceived, 0);
-    };
-
-    // Calculate total sold per product from storeBills
-    const getSoldQty = (fabricProductId) => {
-        return state.storeBills
-            .filter(b => b.shopId === CURRENT_SHOP_ID)
-            .reduce((acc, bill) => {
-                const itemQty = bill.items
-                    .filter(i => i.fabricProductId === fabricProductId)
-                    .reduce((a, i) => a + i.quantity, 0);
-                return acc + itemQty;
-            }, 0);
+            .filter(d => (d.shopId === CURRENT_SHOP_ID || d.storeId === CURRENT_SHOP_ID) &&
+                (d.productId === productId || d.productId?._id === productId))
+            .reduce((a, d) => a + (d.quantityReceived || 0), 0);
     };
 
     // Enrich shop items with received/sold data
     const enrichedItems = shopItems.map(item => ({
         ...item,
-        totalReceived: getReceivedQty(item.fabricProductId),
-        totalSold: getSoldQty(item.fabricProductId),
-        threshold: item.lowStockThreshold || DEFAULT_LOW_THRESHOLD,
+        id: item._id,
+        productName: item.productId?.name || 'Unknown Product',
+        currentStock: item.quantityAvailable,
+        totalSold: item.quantitySold,
+        sellingPrice: item.productId?.salePrice || 0,
+        totalReceived: getReceivedQty(item.productId?._id || item.productId),
+        threshold: item.minStockLevel || DEFAULT_LOW_THRESHOLD,
     }));
 
     const totalStock = enrichedItems.reduce((a, s) => a + s.currentStock, 0);

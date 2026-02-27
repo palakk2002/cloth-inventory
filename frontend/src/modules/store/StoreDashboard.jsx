@@ -27,7 +27,10 @@ export default function StoreDashboard() {
     const todaysSummary = {
         totalOrders: state.storeBills.length,
         totalRevenue: state.storeBills.reduce((a, b) => a + (b.totalAmount || 0), 0),
-        totalItems: state.storeBills.reduce((a, b) => a + (b.items?.reduce((x, i) => x + i.quantity, 0) || 0), 0),
+        totalItems: state.storeBills.reduce((a, b) => {
+            const arr = b.products || b.items || [];
+            return a + arr.reduce((x, i) => x + i.quantity, 0);
+        }, 0),
     };
 
     // ---- Core Logic ----
@@ -78,24 +81,23 @@ export default function StoreDashboard() {
         const billId = `BILL-${now.getFullYear()}-${String(Date.now()).slice(-4)}`;
 
         const saleItems = cartItems.map(item => ({
-            productId: item.fabricProductId || item._id, // backend expects productId
-            productName: item.name,
+            productId: item.id || item._id,
+            barcode: item.barcode || 'N/A',
             quantity: item.quantity,
             price: item.price,
             total: item.price * item.quantity,
         }));
 
         const salePayload = {
-            shopId: CURRENT_SHOP_ID,
+            storeId: CURRENT_SHOP_ID,
             customerName: customerName || 'Walk-in Customer',
-            customerPhone: customerPhone || '',
-            items: saleItems,
-            subtotal,
-            gst,
-            discount,
-            totalAmount: grandTotal,
-            paymentMethod,
-            transactionId: paymentMethod !== 'cash' ? `${paymentMethod.toUpperCase()}-${Date.now()}` : null
+            customerPhone: customerPhone || 'N/A',
+            products: saleItems,
+            subTotal: subtotal,
+            tax: gst,
+            discount: discount,
+            grandTotal: grandTotal,
+            paymentMode: paymentMethod.toUpperCase(),
         };
 
         const res = await createSale(salePayload);

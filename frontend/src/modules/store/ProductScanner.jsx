@@ -11,14 +11,20 @@ function searchProductBySku(skuOrCode, productMaster, shopStock, shopId) {
     if (!query) return null;
 
     // 1. Search Product Master by SKU or Barcode
-    const masterHit = productMaster.find(p => p.sku.toUpperCase() === query || p.barcode.toUpperCase() === query);
+    const masterHit = productMaster.find(p =>
+        (p.sku && p.sku.toUpperCase() === query) ||
+        (p.barcode && p.barcode.toUpperCase() === query)
+    );
 
     if (masterHit) {
         // Find if this product is in this shop's stock
         // Note: shopStock items from backend have productId and quantityAvailable
-        const stockItem = shopStock.find(s => s.productId === masterHit._id);
+        const stockItem = shopStock.find(s =>
+            (s.productId === masterHit._id || s.productId?._id === masterHit._id)
+        );
 
         return {
+            id: masterHit._id,
             fabricProductId: masterHit._id,
             name: masterHit.name,
             price: masterHit.salePrice,
@@ -130,7 +136,9 @@ export default function ProductScanner({ onAddToCart }) {
         if (masterHits.length > 0) {
             // Pick first hit for now or show dropdown (simplifying to first hit for POS speed)
             const hit = masterHits[0];
-            const stockItem = shopStock.find(s => s.productId === hit._id);
+            const stockItem = shopStock.find(s =>
+                (s.productId === hit._id || s.productId?._id === hit._id)
+            );
 
             setFoundProduct({
                 fabricProductId: hit._id,
@@ -140,7 +148,8 @@ export default function ProductScanner({ onAddToCart }) {
                 code: hit.sku,
                 size: hit.size,
                 color: hit.color,
-                brand: hit.brand
+                brand: hit.brand,
+                barcode: hit.barcode
             });
             setNotFound(false);
             setQuantity(1);
@@ -161,10 +170,12 @@ export default function ProductScanner({ onAddToCart }) {
         }
 
         onAddToCart({
+            id: foundProduct.fabricProductId,
             fabricProductId: foundProduct.fabricProductId,
             name: foundProduct.productName,
             price: foundProduct.sellingPrice,
             quantity,
+            barcode: foundProduct.barcode || '',
             code: foundProduct.code || '',
             size: foundProduct.size || '',
             color: foundProduct.color || '',
@@ -200,7 +211,7 @@ export default function ProductScanner({ onAddToCart }) {
 
     // Quick Select Items: Show first few items that are actually in stock
     const inStockMasterItems = productMaster
-        .filter(p => shopStock.some(s => s.productId === p._id && s.quantityAvailable > 0))
+        .filter(p => shopStock.some(s => (s.productId === p._id || s.productId?._id === p._id) && s.quantityAvailable > 0))
         .slice(0, 6);
 
     return (

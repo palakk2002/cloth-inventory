@@ -24,7 +24,7 @@ const createBatchValidation = [
 const updateStageValidation = [
     body('stage')
         .notEmpty().withMessage('Stage is required')
-        .isIn(['CUTTING', 'FINISHING', 'READY']).withMessage('Invalid production stage'),
+        .isIn(['MATERIAL_RECEIVED', 'CUTTING', 'FINISHING', 'READY']).withMessage('Invalid production stage'),
 
     body('productMetadata')
         .if(body('stage').equals('READY'))

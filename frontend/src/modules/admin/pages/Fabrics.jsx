@@ -13,19 +13,35 @@ export default function Fabrics() {
         name: '',
         totalMeter: '',
         pricePerMeter: '',
+        supplierId: '',
+        invoiceNumber: '',
+        color: '',
+        gsm: '',
     });
 
     const handleOpenModal = (fabric = null) => {
         if (fabric) {
             setEditingFabric(fabric);
             setFormData({
-                name: fabric.name,
-                totalMeter: fabric.totalMeter,
-                pricePerMeter: fabric.pricePerMeter,
+                name: fabric.name || fabric.fabricType,
+                totalMeter: fabric.totalMeter || fabric.meterPurchased,
+                pricePerMeter: fabric.pricePerMeter || fabric.ratePerMeter,
+                supplierId: fabric.supplierId?._id || fabric.supplierId || '',
+                invoiceNumber: fabric.invoiceNumber || '',
+                color: fabric.color || '',
+                gsm: fabric.gsm || '',
             });
         } else {
             setEditingFabric(null);
-            setFormData({ name: '', totalMeter: '', pricePerMeter: '' });
+            setFormData({
+                name: '',
+                totalMeter: '',
+                pricePerMeter: '',
+                supplierId: '',
+                invoiceNumber: '',
+                color: '',
+                gsm: '',
+            });
         }
         setIsModalOpen(true);
     };
@@ -223,7 +239,35 @@ export default function Fabrics() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold">Total Meter</label>
+                            <label className="text-sm font-semibold">Supplier *</label>
+                            <select
+                                required
+                                value={formData.supplierId}
+                                onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}
+                                className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 bg-white"
+                            >
+                                <option value="">Select Supplier</option>
+                                {state.suppliers.map(s => (
+                                    <option key={s._id} value={s._id}>{s.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold">Invoice Number *</label>
+                            <input
+                                type="text"
+                                required
+                                value={formData.invoiceNumber}
+                                onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
+                                className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
+                                placeholder="INV-2024-001"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold">Total Meter *</label>
                             <input
                                 type="number"
                                 required
@@ -236,7 +280,7 @@ export default function Fabrics() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold">Price Per Meter (₹)</label>
+                            <label className="text-sm font-semibold">Price Per Meter (₹) *</label>
                             <input
                                 type="number"
                                 required
@@ -246,6 +290,29 @@ export default function Fabrics() {
                                 onChange={(e) => setFormData({ ...formData, pricePerMeter: e.target.value })}
                                 className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
                                 placeholder="150"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold">Color</label>
+                            <input
+                                type="text"
+                                value={formData.color}
+                                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                                className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
+                                placeholder="e.g. Royal Blue"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold">GSM</label>
+                            <input
+                                type="number"
+                                value={formData.gsm}
+                                onChange={(e) => setFormData({ ...formData, gsm: e.target.value })}
+                                className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
+                                placeholder="e.g. 180"
                             />
                         </div>
                     </div>

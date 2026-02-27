@@ -5,22 +5,24 @@ import { useState } from 'react';
 import InvoicePreview from '../admin/components/InvoicePreview';
 
 export default function ReceiveStock() {
-    const { state, dispatch } = useAdmin();
-    const CURRENT_SHOP_ID = state.user?.shopId || 1;
+    const { state, receiveDispatch } = useAdmin();
     const [receivingDispatch, setReceivingDispatch] = useState(null);
     const [receivedQty, setReceivedQty] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
-
+    const CURRENT_SHOP_ID = state.user?.shopId || state.user?.storeId || state.user?.id || state.user?._id;
     // Only show dispatches for this shop
-    const shopDispatches = state.dispatches.filter(d => d.shopId === CURRENT_SHOP_ID);
+    const shopDispatches = state.dispatches.filter(d => String(d.shopId) === String(CURRENT_SHOP_ID) || String(d.storeId) === String(CURRENT_SHOP_ID));
+    console.log("ReceiveStock Debug:", { CURRENT_SHOP_ID, shopDispatches, allDispatches: state.dispatches });
 
     const getStatusBadge = (status) => {
         const styles = {
+            'PENDING': 'bg-yellow-100 text-yellow-700',
             'Pending': 'bg-yellow-100 text-yellow-700',
-            'Partially Delivered': 'bg-blue-100 text-blue-700',
+            'SHIPPED': 'bg-blue-100 text-blue-700',
+            'RECEIVED': 'bg-green-100 text-green-700',
             'Delivered': 'bg-green-100 text-green-700',
         };
         return (
@@ -32,54 +34,29 @@ export default function ReceiveStock() {
 
     const openReceive = (d) => {
         setReceivingDispatch(d);
-        setReceivedQty('');
+        setReceivedQty(d.quantitySent - d.quantityReceived);
         setError('');
         setSuccess('');
     };
 
-    const handleReceive = (e) => {
-        e.preventDefault();
+    const handleReceive = async (dispatchId) => {
         setError('');
         setSuccess('');
-        const qty = parseInt(receivedQty);
-        if (!qty || qty <= 0) { setError('Enter a valid quantity.'); return; }
-        const remaining = receivingDispatch.quantitySent - receivingDispatch.quantityReceived;
-        if (qty > remaining) { setError(`Cannot receive more than remaining (${remaining} pcs).`); return; }
-
-        const diff = receivingDispatch.quantitySent - (receivingDispatch.quantityReceived + qty);
 
         try {
-            // Real API Integration:
-            // await dispatchService.receive(receivingDispatch.id, { 
-            //     receivedQty: qty, 
-            //     isPartial: qty < remaining 
-            // });
-
-            dispatch({
-                type: 'RECEIVE_DISPATCH',
-                payload: {
-                    dispatchId: receivingDispatch.id,
-                    receivedQty: qty,
-                    isPartial: qty < remaining,
-                    difference: remaining - qty
-                }
-            });
-
-            setSuccess(`Received ${qty} pcs of ${receivingDispatch.productName}! Stock updated. ${qty < remaining ? `(Partial: ${remaining - qty} missing)` : ''}`);
-
-            // Update local reference
-            setReceivingDispatch({
-                ...receivingDispatch,
-                quantityReceived: receivingDispatch.quantityReceived + qty,
-            });
+            const res = await receiveDispatch(dispatchId);
+            if (res.success) {
+                setSuccess(`Received successfully! Stock updated.`);
+                setReceivingDispatch(null);
+            }
         } catch (err) {
             setError('Failed to update receipt on server.');
         }
     };
 
     // Summary
-    const pendingCount = shopDispatches.filter(d => d.status !== 'Delivered').length;
-    const totalReceived = shopDispatches.reduce((a, d) => a + d.quantityReceived, 0);
+    const pendingCount = shopDispatches.filter(d => d.status !== 'RECEIVED' && d.status !== 'Delivered').length;
+    const totalReceived = shopDispatches.filter(d => d.status === 'RECEIVED' || d.status === 'Delivered').reduce((a, d) => a + d.quantitySent, 0);
 
     const handleViewInvoice = (dispatchId) => {
         const invoice = state.invoices.find(inv => inv.id === `INV-${dispatchId}`);
@@ -131,63 +108,34 @@ export default function ReceiveStock() {
                         <CheckCircle2 className="w-6 h-6" />
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-muted-foreground">Total Received</p>
+                        <p className="text-sm font-medium text-muted-foreground">Total Received Items</p>
                         <h3 className="text-2xl font-bold mt-1 tracking-tight">{totalReceived} pcs</h3>
                     </div>
                 </div>
             </div>
 
-            {/* Receive Form (if a dispatch is selected) */}
+            {/* Confirmation Modal/UI */}
             {receivingDispatch && (
-                <div className="card p-6 space-y-5 border-l-4 border-primary">
-                    <h2 className="text-lg font-bold">Receiving: {receivingDispatch.productName}</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="p-4 bg-muted/30 rounded-xl border border-border">
-                            <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Qty Sent</p>
-                            <p className="text-sm font-bold">{receivingDispatch.quantitySent} pcs</p>
-                        </div>
-                        <div className="p-4 bg-muted/30 rounded-xl border border-border">
-                            <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Already Received</p>
-                            <p className="text-sm font-bold text-green-600">{receivingDispatch.quantityReceived} pcs</p>
-                        </div>
-                        <div className="p-4 bg-primary/5 rounded-xl border border-primary/20">
-                            <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Remaining</p>
-                            <p className="text-sm font-bold text-primary">{receivingDispatch.quantitySent - receivingDispatch.quantityReceived} pcs</p>
-                        </div>
-                        <div className="p-4 bg-muted/30 rounded-xl border border-border">
-                            <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Dispatch Date</p>
-                            <p className="text-sm font-bold">{receivingDispatch.dispatchDate}</p>
-                        </div>
+                <div className="card p-6 border-l-4 border-primary bg-primary/[0.02]">
+                    <h2 className="text-lg font-bold mb-4 text-primary">Confirm Receipt of {receivingDispatch.productName}</h2>
+                    <p className="text-sm text-muted-foreground mb-6">
+                        You are confirming receipt of <span className="font-bold text-foreground">{receivingDispatch.quantitySent}</span> pieces sent on <span className="font-bold text-foreground">{receivingDispatch.dispatchDate}</span>.
+                        This operation will update your shop's inventory immediately.
+                    </p>
+                    <div className="flex gap-4">
+                        <button
+                            onClick={() => handleReceive(receivingDispatch._id || receivingDispatch.id)}
+                            className="px-6 py-2.5 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
+                        >
+                            Confirm & Update Stock
+                        </button>
+                        <button
+                            onClick={() => setReceivingDispatch(null)}
+                            className="px-6 py-2.5 border border-border font-bold rounded-xl hover:bg-muted transition-all"
+                        >
+                            Cancel
+                        </button>
                     </div>
-
-                    <form onSubmit={handleReceive} className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold">Quantity Received</label>
-                            <input type="number" required min="1"
-                                max={receivingDispatch.quantitySent - receivingDispatch.quantityReceived}
-                                value={receivedQty}
-                                onChange={(e) => { setReceivedQty(e.target.value); setError(''); }}
-                                className="w-full max-w-xs px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
-                                placeholder="Enter received quantity" />
-                        </div>
-
-                        {error && (
-                            <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg border border-red-200 text-sm font-medium">
-                                <AlertCircle className="w-4 h-4 shrink-0" /> {error}
-                            </div>
-                        )}
-                        {success && (
-                            <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-lg border border-green-200 text-sm font-medium">
-                                <CheckCircle2 className="w-4 h-4 shrink-0" /> {success}
-                            </div>
-                        )}
-
-                        <div className="flex gap-3">
-                            <button type="button" onClick={() => setReceivingDispatch(null)}
-                                className="px-4 py-2 border border-border rounded-lg font-medium hover:bg-muted transition-all">Cancel</button>
-                            <button type="submit" className="btn-primary">Confirm Receive</button>
-                        </div>
-                    </form>
                 </div>
             )}
 
@@ -219,28 +167,22 @@ export default function ReceiveStock() {
                                     <td className="px-6 py-4 text-sm text-muted-foreground">{d.dispatchDate}</td>
                                     <td className="px-6 py-4">{getStatusBadge(d.status)}</td>
                                     <td className="px-6 py-4">
-                                        {d.status !== 'Delivered' && (
+                                        {d.status !== 'RECEIVED' && (
                                             <button onClick={() => openReceive(d)}
                                                 className="text-sm font-semibold text-primary hover:underline flex items-center gap-1">
                                                 <PackageCheck className="w-4 h-4" /> Receive
                                             </button>
                                         )}
-                                        {d.status === 'Delivered' && (
+                                        {d.status === 'RECEIVED' && (
                                             <div className="flex flex-col gap-1">
                                                 <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full w-fit">VERIFIED FULL</span>
                                                 <button
-                                                    onClick={() => handleViewInvoice(d.id)}
+                                                    onClick={() => handleViewInvoice(d._id || d.id)}
                                                     className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
                                                 >
                                                     <Receipt className="w-3 h-3" /> View Invoice
                                                 </button>
                                             </div>
-                                        )}
-                                        {d.status === 'Partially Delivered' && (
-                                            <button onClick={() => openReceive(d)}
-                                                className="text-sm font-semibold text-orange-600 hover:underline flex items-center gap-1">
-                                                <PackageCheck className="w-4 h-4" /> Receive Rest
-                                            </button>
                                         )}
                                     </td>
                                 </tr>

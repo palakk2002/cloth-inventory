@@ -5,12 +5,12 @@ const supplierService = {
         const response = await api.get('/suppliers');
         return response.data;
     },
-    create: async (supplierData) => {
-        const response = await api.post('/suppliers', supplierData);
+    create: async (data) => {
+        const response = await api.post('/suppliers', data);
         return response.data;
     },
-    update: async (id, supplierData) => {
-        const response = await api.patch(`/suppliers/${id}`, supplierData);
+    update: async (id, data) => {
+        const response = await api.patch(`/suppliers/${id}`, data);
         return response.data;
     },
     delete: async (id) => {

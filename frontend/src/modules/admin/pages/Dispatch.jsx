@@ -15,9 +15,11 @@ export default function Dispatch() {
     const [generatedInvoice, setGeneratedInvoice] = useState(null);
     const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
 
-    const selectedProduct = state.fabricProducts.find(p => p.id === parseInt(fabricProductId));
+    const { addDispatch } = useAdmin();
 
-    const handleSubmit = (e) => {
+    const selectedProduct = state.fabricProducts.find(p => p.id === fabricProductId);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess('');
@@ -33,44 +35,42 @@ export default function Dispatch() {
             return;
         }
 
-        const shop = state.shops.find(s => s.id === parseInt(shopId));
+        const shop = state.shops.find(s => (s.id === shopId || s._id === shopId));
 
-        const dispatchId = Date.now();
-        dispatch({
-            type: 'ADD_DISPATCH',
-            payload: {
-                id: dispatchId,
-                shopId: parseInt(shopId),
-                fabricProductId: selectedProduct.id,
-                quantitySent: qty,
-            }
+        const res = await addDispatch({
+            storeId: shopId,
+            products: [
+                { productId: selectedProduct.id || selectedProduct._id, quantity: qty }
+            ]
         });
 
-        const invoiceData = {
-            id: `INV-${dispatchId}`,
-            shopName: shop?.name || 'Shop',
-            productName: selectedProduct.name,
-            fabricType: selectedProduct.fabricType || 'N/A',
-            quantity: qty,
-            pricePerUnit: selectedProduct.sellingPrice || 0,
-            total: qty * (selectedProduct.sellingPrice || 0),
-            date: new Date().toISOString().split('T')[0]
-        };
+        if (res.success) {
+            const invoiceData = {
+                id: `INV-${res.dispatchId || Date.now()}`,
+                shopName: shop?.name || 'Shop',
+                productName: selectedProduct.name,
+                fabricType: selectedProduct.fabricType || 'N/A',
+                quantity: qty,
+                pricePerUnit: selectedProduct.sellingPrice || 0,
+                total: qty * (selectedProduct.sellingPrice || 0),
+                date: new Date().toISOString().split('T')[0]
+            };
 
-        dispatch({ type: 'ADD_INVOICE', payload: invoiceData });
-        setGeneratedInvoice(invoiceData);
-        setIsInvoiceOpen(true);
-
-        setSuccess(`Dispatched ${qty} × ${selectedProduct.name} → ${shop?.name}`);
-        setShopId('');
-        setFabricProductId('');
-        setQuantity('');
+            setGeneratedInvoice(invoiceData);
+            setIsInvoiceOpen(true);
+            setSuccess(`Dispatched ${qty} × ${selectedProduct.name} → ${shop?.name}`);
+            setShopId('');
+            setFabricProductId('');
+            setQuantity('');
+        }
     };
 
     const getStatusBadge = (status) => {
         const styles = {
+            'PENDING': 'bg-yellow-100 text-yellow-700',
             'Pending': 'bg-yellow-100 text-yellow-700',
-            'Partially Delivered': 'bg-blue-100 text-blue-700',
+            'SHIPPED': 'bg-blue-100 text-blue-700',
+            'RECEIVED': 'bg-green-100 text-green-700',
             'Delivered': 'bg-green-100 text-green-700',
         };
         return (
@@ -81,14 +81,14 @@ export default function Dispatch() {
     };
 
     const filteredDispatches = state.dispatches.filter(d =>
-        d.shopName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        d.productName.toLowerCase().includes(searchTerm.toLowerCase())
+        (d.shopName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (d.productName || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     // Summary stats
-    const totalDispatched = state.dispatches.reduce((a, d) => a + d.quantitySent, 0);
-    const totalDelivered = state.dispatches.filter(d => d.status === 'Delivered').length;
-    const pendingCount = state.dispatches.filter(d => d.status === 'Pending').length;
+    const totalDispatched = state.dispatches.reduce((a, d) => a + (d.quantitySent || d.quantity || 0), 0);
+    const totalDelivered = state.dispatches.filter(d => d.status === 'RECEIVED' || d.status === 'Delivered').length;
+    const pendingCount = state.dispatches.filter(d => d.status === 'PENDING' || d.status === 'Pending').length;
 
     return (
         <div className="space-y-6">
@@ -157,7 +157,7 @@ export default function Dispatch() {
                                 className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20">
                                 <option value="">Choose a shop...</option>
                                 {state.shops.map(s => (
-                                    <option key={s.id} value={s.id}>{s.name}</option>
+                                    <option key={s.id || s._id} value={s.id || s._id}>{s.name}</option>
                                 ))}
                             </select>
                         </div>
@@ -169,7 +169,7 @@ export default function Dispatch() {
                                 className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20">
                                 <option value="">Choose a product...</option>
                                 {state.fabricProducts.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</option>
+                                    <option key={p.id || p._id} value={p.id || p._id}>{p.name} (Stock: {p.stock || p.factoryStock})</option>
                                 ))}
                             </select>
                         </div>

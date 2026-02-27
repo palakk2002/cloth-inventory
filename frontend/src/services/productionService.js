@@ -9,8 +9,10 @@ const productionService = {
         const response = await api.post('/production', batchData);
         return response.data;
     },
-    moveStage: async (batchId, nextStage) => {
-        const response = await api.patch(`/production/${batchId}/stage`, { stage: nextStage });
+    moveStage: async (batchId, nextStage, productMetadata = null) => {
+        const body = { stage: nextStage };
+        if (productMetadata) body.productMetadata = productMetadata;
+        const response = await api.patch(`/production/${batchId}/stage`, body);
         return response.data;
     }
 };

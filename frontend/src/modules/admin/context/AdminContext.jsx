@@ -11,6 +11,7 @@ import storeInventoryService from '../../../services/storeInventoryService';
 import salesService from '../../../services/salesService';
 import staffService from '../../../services/staffService';
 import categoryService from '../../../services/categoryService';
+import { useAuth } from '../../../context/AuthContext';
 
 export const generateSKU = (category = 'NA', brand = 'NA', size = 'NA', counter = 1) => {
     const catCode = category.substring(0, 2).toUpperCase() || 'XX';
@@ -159,7 +160,7 @@ function adminReducer(state, action) {
                 ...action.payload,
                 products: pmData.length > 0 ? groupProducts(pmData) : state.products,
                 fabricProducts: pmData.map(p => {
-                    const batch = pbData.find(b => b._id === p.batchId);
+                    const batch = pbData.find(b => b._id === p.batchId || b._id === p.batchId?._id);
                     return {
                         ...p,
                         id: p._id,
@@ -177,6 +178,10 @@ function adminReducer(state, action) {
                     pricePerMeter: f.ratePerMeter,
                     usedMeter: (f.meterPurchased || 0) - (f.meterAvailable || 0)
                 })) : state.fabrics,
+                shops: Array.isArray(action.payload.shops) ? action.payload.shops.map(s => ({
+                    ...s,
+                    id: s._id
+                })) : state.shops,
                 productionLog: pbData.map(b => ({ ...b, id: b._id, fabricProductId: b.fabricId })),
                 sales: sbData,
                 productionBatches: pbData,
@@ -193,7 +198,7 @@ function adminReducer(state, action) {
                 productMaster: refreshedPM,
                 products: groupProducts(refreshedPM),
                 fabricProducts: refreshedPM.map(p => {
-                    const batch = state.productionBatches.find(b => b._id === p.batchId);
+                    const batch = state.productionBatches.find(b => b._id === p.batchId || b._id === p.batchId?._id);
                     return {
                         ...p,
                         id: p._id,
@@ -204,23 +209,47 @@ function adminReducer(state, action) {
                     };
                 })
             };
+        case 'ADD_PRODUCTION_BATCH':
+            return {
+                ...state,
+                productionBatches: [...state.productionBatches, action.payload],
+                productionLog: [...state.productionLog, { ...action.payload, id: action.payload._id, date: new Date().toLocaleDateString() }]
+            };
+        case 'MOVE_PRODUCTION_BATCH':
+            return {
+                ...state,
+                productionBatches: state.productionBatches.map(b =>
+                    b._id === action.payload.batchId ? { ...b, stage: action.payload.nextStage } : b
+                )
+            };
+        case 'ADD_DISPATCH':
+            return {
+                ...state,
+                dispatches: [...state.dispatches, action.payload]
+            };
         case 'RECEIVE_DISPATCH':
             return {
                 ...state,
                 dispatches: state.dispatches.map(d =>
-                    d.id === action.payload.dispatchId
-                        ? {
-                            ...d,
-                            quantityReceived: d.quantityReceived + action.payload.receivedQty,
-                            status: action.payload.isPartial ? 'Partially Delivered' : 'Delivered'
-                        }
+                    (d._id === action.payload.dispatchId || d.id === action.payload.dispatchId)
+                        ? { ...d, status: 'RECEIVED' }
                         : d
-                ),
-                invoices: state.invoices.map(inv =>
-                    inv.id === action.payload.dispatchId
-                        ? { ...inv, status: action.payload.isPartial ? 'Partially Delivered' : 'Delivered' }
-                        : inv
                 )
+            };
+        case 'ADD_STORE':
+            return {
+                ...state,
+                shops: [...state.shops, { ...action.payload, id: action.payload._id }]
+            };
+        case 'DELETE_STORE':
+            return {
+                ...state,
+                shops: state.shops.filter(s => s.id !== action.payload && s._id !== action.payload)
+            };
+        case 'ADD_INVOICE':
+            return {
+                ...state,
+                invoices: [...state.invoices, action.payload]
             };
         case 'ADD_SUPPLIER_ORDER':
             return {
@@ -263,6 +292,13 @@ function adminReducer(state, action) {
 
 export function AdminProvider({ children }) {
     const [state, dispatch] = useReducer(adminReducer, initialState);
+    const auth = useAuth();
+
+    useEffect(() => {
+        if (auth.user !== undefined) {
+            dispatch({ type: 'SET_USER', payload: auth.user });
+        }
+    }, [auth.user]);
 
     const fetchData = useCallback(async () => {
         if (!state.user) return;
@@ -294,11 +330,12 @@ export function AdminProvider({ children }) {
             let shopStock = [];
             let storeBills = [];
 
-            if (state.user.role === 'Admin') {
+            if (state.user.role === 'admin') {
                 stats = await reportService.getDashboardStats().catch(() => null);
-            } else if (state.user.role === 'Store') {
-                shopStock = await storeInventoryService.getShopStock(state.user.shopId).catch(() => []);
-                storeBills = await salesService.getShopHistory(state.user.shopId).catch(() => []);
+            } else if (state.user.role === 'store_staff') {
+                const shopId = state.user.shopId || state.user.storeId;
+                shopStock = await storeInventoryService.getShopStock(shopId).catch(() => []);
+                storeBills = await salesService.getAll(shopId).catch(() => []);
             }
 
             dispatch({
@@ -308,16 +345,17 @@ export function AdminProvider({ children }) {
                     shops: stores,
                     fabrics: Array.isArray(fabrics) ? fabrics : (fabrics?.fabrics || []),
                     suppliers: Array.isArray(suppliers) ? suppliers : (suppliers?.suppliers || []),
-                    supplierOrders: state.supplierOrders, // Keep local orders or map from actual orders if backend exists
+                    supplierOrders: state.supplierOrders,
                     productionBatches: Array.isArray(production) ? production : (production?.batches || []),
                     storeBills: Array.isArray(storeBills) ? storeBills : (storeBills?.sales || []),
                     staff: Array.isArray(staff) ? staff : (staff?.staff || []),
                     categories,
                     dispatches: Array.isArray(dispatches) ? dispatches : (dispatches?.dispatches || []),
+                    shopStock: Array.isArray(shopStock) ? shopStock : (shopStock?.inventory || []),
                     skuCounter: products.length + 1
                 }
             });
-            
+
             // Map dispatches to invoices and flattened format
             const rawDispatches = Array.isArray(dispatches) ? dispatches : (dispatches?.dispatches || []);
             const flattenedDispatches = rawDispatches.flatMap(d =>
@@ -452,11 +490,17 @@ export function AdminProvider({ children }) {
             // Map frontend names back to backend
             const backendData = {
                 fabricType: fabricData.name,
-                meterPurchased: fabricData.totalMeter,
-                ratePerMeter: fabricData.pricePerMeter,
-                supplierId: fabricData.supplierId || state.supplierOrders[0]?._id // Fallback or handle appropriately
+                meterPurchased: parseFloat(fabricData.totalMeter),
+                ratePerMeter: parseFloat(fabricData.pricePerMeter),
+                supplierId: fabricData.supplierId,
+                invoiceNumber: fabricData.invoiceNumber,
+                color: fabricData.color,
+                gsm: fabricData.gsm,
+                notes: fabricData.notes
             };
+
             if (!backendData.supplierId) throw new Error('Supplier is required');
+            if (!backendData.invoiceNumber) throw new Error('Invoice Number is required');
 
             await fabricService.create(backendData);
             await fetchData();
@@ -500,6 +544,71 @@ export function AdminProvider({ children }) {
         }
     };
 
+    const addProductionBatch = async (batchData) => {
+        dispatch({ type: 'SET_LOADING', payload: true });
+        try {
+            const res = await productionService.create(batchData);
+            dispatch({ type: 'ADD_PRODUCTION_BATCH', payload: res.batch });
+            await fetchData();
+            return { success: true };
+        } catch (err) {
+            dispatch({ type: 'SET_ERROR', payload: err.response?.data?.message || 'Failed to start production' });
+            return { success: false };
+        } finally {
+            dispatch({ type: 'SET_LOADING', payload: false });
+        }
+    };
+
+    const moveProductionStage = async (batchId, nextStage, metadata = null) => {
+        dispatch({ type: 'SET_LOADING', payload: true });
+        try {
+            const stage = nextStage.toUpperCase();
+            const payload = { stage };
+            if (stage === 'READY' && metadata) payload.productMetadata = metadata;
+
+            await productionService.moveStage(batchId, stage, metadata);
+            dispatch({ type: 'MOVE_PRODUCTION_BATCH', payload: { batchId, nextStage: stage } });
+            await fetchData();
+            return { success: true };
+        } catch (err) {
+            dispatch({ type: 'SET_ERROR', payload: err.response?.data?.message || 'Failed to update stage' });
+            return { success: false };
+        } finally {
+            dispatch({ type: 'SET_LOADING', payload: false });
+        }
+    };
+
+    const addDispatch = async (dispatchData) => {
+        dispatch({ type: 'SET_LOADING', payload: true });
+        try {
+            const res = await dispatchService.create(dispatchData);
+            dispatch({ type: 'ADD_DISPATCH', payload: res.dispatch });
+            await fetchData();
+            return { success: true, dispatchId: res.dispatch._id };
+        } catch (err) {
+            dispatch({ type: 'SET_ERROR', payload: err.response?.data?.message || 'Failed to dispatch' });
+            return { success: false };
+        } finally {
+            dispatch({ type: 'SET_LOADING', payload: false });
+        }
+    };
+
+    const receiveDispatch = async (dispatchId) => {
+        dispatch({ type: 'SET_LOADING', payload: true });
+        try {
+            await dispatchService.receive(dispatchId);
+            dispatch({ type: 'RECEIVE_DISPATCH', payload: { dispatchId } });
+            await fetchData();
+            return { success: true };
+        } catch (err) {
+            dispatch({ type: 'SET_ERROR', payload: err.response?.data?.message || 'Failed to receive dispatch' });
+            return { success: false };
+        } finally {
+            dispatch({ type: 'SET_LOADING', payload: false });
+        }
+    };
+
+
     return (
         <AdminContext.Provider value={{
             state,
@@ -514,6 +623,10 @@ export function AdminProvider({ children }) {
             addFabric,
             updateFabric,
             deleteFabric,
+            addProductionBatch,
+            moveProductionStage,
+            addDispatch,
+            receiveDispatch,
             refresh: fetchData
         }}>
             {children}

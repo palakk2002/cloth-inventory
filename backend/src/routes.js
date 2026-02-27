@@ -18,6 +18,7 @@ const registerRoutes = (app) => {
     app.use('/api/returns', require('./modules/returns/return.routes'));
     app.use('/api/reports', require('./modules/reports/report.routes'));
     app.use('/api/dashboard', require('./modules/dashboard/dashboard.routes'));
+    app.use('/api/categories', require('./modules/categories/category.routes'));
 };
 
 module.exports = registerRoutes;

@@ -3,14 +3,11 @@ import { useAdmin } from '../context/AdminContext';
 import { Package, ArrowRight, Clock } from 'lucide-react';
 
 export default function MaterialReceived() {
-    const { state, dispatch } = useAdmin();
-    const batches = state.productionBatches.filter(b => b.status === 'material');
+    const { state, moveProductionStage } = useAdmin();
+    const batches = state.productionBatches.filter(b => b.stage === 'MATERIAL_RECEIVED');
 
     const handleMove = (batchId) => {
-        dispatch({
-            type: 'MOVE_PRODUCTION_BATCH',
-            payload: { batchId, nextStatus: 'cutting' }
-        });
+        moveProductionStage(batchId, 'CUTTING');
     };
 
     return (
@@ -22,23 +19,37 @@ export default function MaterialReceived() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {batches.map(batch => (
-                    <div key={batch.id} className="card p-6 border-l-4 border-yellow-500 flex flex-col justify-between">
+                    <div key={batch._id} className="card p-6 border-l-4 border-yellow-500 flex flex-col justify-between">
                         <div>
                             <div className="flex justify-between items-start mb-4">
                                 <div className="p-2 bg-yellow-50 text-yellow-600 rounded-lg">
                                     <Package className="w-6 h-6" />
                                 </div>
-                                <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground bg-muted px-2 py-1 rounded">
-                                    <Clock className="w-3 h-3" /> {batch.date}
+                                <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground bg-muted px-2 py-1 rounded shadow-sm">
+                                    <Clock className="w-3 h-3" /> {new Date(batch.createdAt).toLocaleDateString()}
                                 </div>
                             </div>
-                            <h3 className="text-lg font-bold mb-1">{batch.productName}</h3>
-                            <p className="text-sm text-muted-foreground mb-4">Quantity: <span className="font-bold text-foreground">{batch.quantity} pcs</span></p>
+                            <div className="flex justify-between items-center mb-1">
+                                <span className="text-[10px] font-black tracking-widest text-primary uppercase">{batch.batchNumber}</span>
+                            </div>
+                            <h3 className="text-lg font-bold mb-1">{batch.fabricId?.fabricType || 'Raw Materials'}</h3>
+                            <p className="text-sm text-muted-foreground mb-4">Total Pieces: <span className="font-bold text-foreground">{batch.totalPieces} pcs</span></p>
+
+                            <div className="grid grid-cols-2 gap-2 mb-4">
+                                <div className="p-2 bg-muted/50 rounded-lg text-center">
+                                    <p className="text-[8px] uppercase font-bold text-muted-foreground">Meter Used</p>
+                                    <p className="text-xs font-bold">{batch.meterUsed}m</p>
+                                </div>
+                                <div className="p-2 bg-muted/50 rounded-lg text-center">
+                                    <p className="text-[8px] uppercase font-bold text-muted-foreground">Color</p>
+                                    <p className="text-xs font-bold">{batch.fabricId?.color || 'N/A'}</p>
+                                </div>
+                            </div>
                         </div>
 
                         <button
-                            onClick={() => handleMove(batch.id)}
-                            className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-yellow-100"
+                            onClick={() => handleMove(batch._id)}
+                            className="w-full mt-2 flex items-center justify-center gap-2 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-yellow-100"
                         >
                             Move to Cutting <ArrowRight className="w-4 h-4" />
                         </button>

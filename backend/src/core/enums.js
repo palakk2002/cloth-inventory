@@ -23,6 +23,7 @@ const ProductionStatus = {
 };
 
 const ProductionStage = {
+    MATERIAL_RECEIVED: 'MATERIAL_RECEIVED',
     CUTTING: 'CUTTING',
     FINISHING: 'FINISHING',
     READY: 'READY',
