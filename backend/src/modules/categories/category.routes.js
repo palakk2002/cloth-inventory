@@ -1,13 +1,18 @@
 const express = require('express');
-const router = express.Router();
 const categoryController = require('./category.controller');
 const { protect } = require('../../middlewares/auth.middleware');
-const { requireRole } = require('../../middlewares/role.middleware');
+const { requireAdmin } = require('../../middlewares/role.middleware');
+
+const router = express.Router();
 
 router.use(protect);
 
-router.get('/', categoryController.getAllCategories);
-router.post('/', requireRole('admin'), categoryController.createCategory);
-router.delete('/:id', requireRole('admin'), categoryController.deleteCategory);
+router.route('/')
+    .get(categoryController.getAllCategories)
+    .post(requireAdmin, categoryController.createCategory);
+
+router.route('/:id')
+    .patch(requireAdmin, categoryController.updateCategory)
+    .delete(requireAdmin, categoryController.deleteCategory);
 
 module.exports = router;

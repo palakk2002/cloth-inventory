@@ -20,6 +20,11 @@ const categorySchema = new mongoose.Schema(
         isDeleted: {
             type: Boolean,
             default: false
+        },
+        createdBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: false // changed to false to be safe
         }
     },
     { timestamps: true }

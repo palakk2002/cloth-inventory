@@ -20,7 +20,6 @@ export default function Production() {
     const handleBreakdownChange = (size, value) => {
         setBreakdown(prev => ({ ...prev, [size]: parseInt(value) || 0 }));
     };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -231,6 +230,7 @@ export default function Production() {
                                                 {batch.stage.replace('_', ' ')}
                                             </span>
                                         </td>
+
                                     </tr>
                                 );
                             })}

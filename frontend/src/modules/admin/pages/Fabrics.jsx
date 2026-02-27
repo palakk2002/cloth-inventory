@@ -56,10 +56,8 @@ export default function Fabrics() {
         if (editingFabric) {
             await updateFabric(editingFabric.id, payload);
         } else {
-            // Need a supplierId. 
-            // The backend requires supplierId. Fabrics.jsx form doesn't have it yet.
-            // I'll assume we uses the first available supplier for now or show an alert if none exists.
-            await addFabric(payload);
+            const res = await addFabric(payload);
+            if (!res.success) return; // Error handled in context
         }
         setIsModalOpen(false);
     };
@@ -225,16 +223,44 @@ export default function Fabrics() {
                 title={editingFabric ? 'Edit Fabric' : 'Add Fabric'}
             >
                 <form onSubmit={handleSubmit} className="space-y-5">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold">Fabric Name</label>
+                            <input
+                                type="text"
+                                required
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
+                                placeholder="Cotton White"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold">Invoice Number</label>
+                            <input
+                                type="text"
+                                required
+                                value={formData.invoiceNumber}
+                                onChange={(e) => setFormData({ ...formData, invoiceNumber: e.target.value })}
+                                className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
+                                placeholder="INV-2024-001"
+                            />
+                        </div>
+                    </div>
+
                     <div className="space-y-2">
-                        <label className="text-sm font-semibold">Fabric Name</label>
-                        <input
-                            type="text"
+                        <label className="text-sm font-semibold">Supplier</label>
+                        <select
                             required
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            value={formData.supplierId}
+                            onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}
                             className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
-                            placeholder="Cotton White"
-                        />
+                        >
+                            <option value="">Select Supplier</option>
+                            {state.suppliers.map(s => (
+                                <option key={s._id} value={s._id}>{s.name} ({s.contactPerson})</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

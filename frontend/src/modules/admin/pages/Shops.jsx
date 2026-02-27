@@ -11,18 +11,29 @@ export default function Shops() {
 
     const [formData, setFormData] = useState({
         name: '',
-        owner: '',
-        contact: '',
+        managerName: '',
+        managerPhone: '',
+        email: '',
         address: '',
+        city: '',
+        state: '',
     });
 
     const handleOpenModal = (shop = null) => {
         if (shop) {
             setEditingShop(shop);
-            setFormData({ name: shop.name, owner: shop.owner || '', contact: shop.contact || '', address: shop.address || '' });
+            setFormData({
+                name: shop.name,
+                managerName: shop.managerName || '',
+                managerPhone: shop.managerPhone || '',
+                email: shop.email || '',
+                address: shop.location?.address || '',
+                city: shop.location?.city || '',
+                state: shop.location?.state || '',
+            });
         } else {
             setEditingShop(null);
-            setFormData({ name: '', owner: '', contact: '', address: '' });
+            setFormData({ name: '', managerName: '', managerPhone: '', email: '', address: '', city: '', state: '' });
         }
         setIsModalOpen(true);
     };
@@ -32,7 +43,15 @@ export default function Shops() {
         if (editingShop) {
             alert('Update shop is currently restricted.');
         } else {
-            const res = await addStore(formData);
+            const payload = {
+                ...formData,
+                location: {
+                    address: formData.address,
+                    city: formData.city,
+                    state: formData.state
+                }
+            };
+            const res = await addStore(payload);
             if (res.success) setIsModalOpen(false);
         }
     };
@@ -45,7 +64,7 @@ export default function Shops() {
 
     const filteredShops = state.shops.filter(s =>
         s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (s.owner?.toLowerCase().includes(searchTerm.toLowerCase()))
+        (s.managerName?.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     // Calculate total purchases per shop from storeBills data
@@ -142,9 +161,9 @@ export default function Shops() {
                                     <td className="px-6 py-4">
                                         <span className="text-sm font-bold">{shop.name}</span>
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-muted-foreground">{shop.owner}</td>
-                                    <td className="px-6 py-4 text-sm font-mono text-muted-foreground">{shop.contact}</td>
-                                    <td className="px-6 py-4 text-sm text-muted-foreground max-w-[200px] truncate">{shop.address}</td>
+                                    <td className="px-6 py-4 text-sm text-muted-foreground">{shop.managerName}</td>
+                                    <td className="px-6 py-4 text-sm font-mono text-muted-foreground">{shop.managerPhone}</td>
+                                    <td className="px-6 py-4 text-sm text-muted-foreground max-w-[200px] truncate">{shop.location?.address}, {shop.location?.city}</td>
                                     <td className="px-6 py-4 text-sm font-bold">₹{getShopPurchaseTotal(shop._id).toLocaleString()}</td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
@@ -196,28 +215,41 @@ export default function Shops() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold">Owner Name</label>
+                            <label className="text-sm font-semibold">Manager Name</label>
                             <input
                                 type="text"
                                 required
-                                value={formData.owner}
-                                onChange={(e) => setFormData({ ...formData, owner: e.target.value })}
+                                value={formData.managerName}
+                                onChange={(e) => setFormData({ ...formData, managerName: e.target.value })}
                                 className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
                                 placeholder="Rahul Sharma"
                             />
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-sm font-semibold">Contact Number</label>
-                        <input
-                            type="tel"
-                            required
-                            value={formData.contact}
-                            onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
-                            className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
-                            placeholder="9876543210"
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold">Manager Phone</label>
+                            <input
+                                type="tel"
+                                required
+                                value={formData.managerPhone}
+                                onChange={(e) => setFormData({ ...formData, managerPhone: e.target.value })}
+                                className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
+                                placeholder="9876543210"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold">Email</label>
+                            <input
+                                type="email"
+                                required
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
+                                placeholder="shop@example.com"
+                            />
+                        </div>
                     </div>
 
                     <div className="space-y-2">
@@ -228,8 +260,33 @@ export default function Shops() {
                             value={formData.address}
                             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                             className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
-                            placeholder="MG Road, Delhi"
+                            placeholder="MG Road"
                         />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold">City</label>
+                            <input
+                                type="text"
+                                required
+                                value={formData.city}
+                                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
+                                placeholder="New Delhi"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold">State</label>
+                            <input
+                                type="text"
+                                required
+                                value={formData.state}
+                                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                                className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20"
+                                placeholder="Delhi"
+                            />
+                        </div>
                     </div>
 
                     <div className="pt-2 flex gap-3">
