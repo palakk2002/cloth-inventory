@@ -5,7 +5,7 @@ import StatusBadge from '../components/StatusBadge';
 import { Plus, Edit2, Trash2, Search, AlertCircle } from 'lucide-react';
 
 export default function Categories() {
-    const { state, dispatch, addCategory, deleteCategory: deleteCategoryAction } = useAdmin();
+    const { state, dispatch, addCategory, updateCategory, deleteCategory: deleteCategoryAction } = useAdmin();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
     const [formData, setFormData] = useState({ name: '', description: '', status: 'Active' });
@@ -30,12 +30,10 @@ export default function Categories() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (editingCategory) {
-            // Backend update for category not explicitly in AdminContext yet, 
-            // but addCategory handles the refresh.
-            // For now, let's just use add if new, or show restriction
-            alert('Update category is currently restricted.');
+            const success = await updateCategory(editingCategory._id, formData);
+            if (success) handleCloseModal();
         } else {
-            const success = await addCategory(formData.name);
+            const success = await addCategory(formData);
             if (success) handleCloseModal();
         }
     };

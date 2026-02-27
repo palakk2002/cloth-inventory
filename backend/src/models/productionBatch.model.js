@@ -26,6 +26,11 @@ const productionBatchSchema = new mongoose.Schema(
             ref: 'Fabric',
             required: [true, 'Fabric reference is required']
         },
+        productId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Product',
+            required: [true, 'Product reference is required']
+        },
         meterUsed: {
             type: Number,
             required: [true, 'Meter usage is required'],
