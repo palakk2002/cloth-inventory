@@ -35,7 +35,7 @@ const generateBatchNumber = async () => {
  */
 const createBatch = async (batchData, userId) => {
     return await withTransaction(async (session) => {
-        const { fabricId, meterUsed, sizeBreakdown } = batchData;
+        const { fabricId, productId, meterUsed, sizeBreakdown } = batchData;
 
         // 1. Validate Fabric
         const fabric = await Fabric.findOne({ _id: fabricId, isDeleted: false }).session(session);

@@ -3,19 +3,27 @@ import { useAdmin } from '../context/AdminContext';
 import { Factory, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function Production() {
-    const { state, dispatch } = useAdmin();
+    const { state, addProduction } = useAdmin();
 
     const [selectedProductId, setSelectedProductId] = useState('');
     const [quantity, setQuantity] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    const selectedProduct = state.fabricProducts.find(p => p.id === parseInt(selectedProductId));
-    const linkedFabric = selectedProduct ? state.fabrics.find(f => f.id === selectedProduct.fabricId) : null;
+    const selectedProduct = state.fabricProducts.find(p =>
+        (p.id?.toString() === selectedProductId?.toString()) ||
+        (p._id?.toString() === selectedProductId?.toString())
+    );
+
+    const linkedFabricId = selectedProduct?.fabricId?._id || selectedProduct?.fabricId;
+    const linkedFabric = linkedFabricId ? state.fabrics.find(f =>
+        (f.id?.toString() === linkedFabricId.toString()) ||
+        (f._id?.toString() === linkedFabricId.toString())
+    ) : null;
     const availableMeter = linkedFabric ? linkedFabric.totalMeter - linkedFabric.usedMeter : 0;
     const totalMeterRequired = selectedProduct ? selectedProduct.meterPerPiece * parseFloat(quantity || 0) : 0;
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess('');
@@ -30,20 +38,26 @@ export default function Production() {
             return;
         }
 
-        dispatch({
-            type: 'ADD_PRODUCTION_BATCH',
-            payload: {
-                fabricProductId: selectedProduct.id,
-                productName: selectedProduct.name,
-                fabricId: linkedFabric.id,
-                quantity: parseInt(quantity),
-                meterUsed: totalMeterRequired,
-            }
-        });
+        if (!selectedProduct || !linkedFabric) {
+            setError('Product or Fabric details not found.');
+            return;
+        }
 
-        setSuccess(`Successfully initiated production for ${quantity} units of ${selectedProduct.name}! Move to next stage in Workflow.`);
-        setSelectedProductId('');
-        setQuantity('');
+        const payload = {
+            productId: selectedProduct._id || selectedProduct.id,
+            fabricId: linkedFabric._id || linkedFabric.id,
+            meterUsed: totalMeterRequired,
+            sizeBreakdown: [
+                { size: 'FREE', quantity: parseInt(quantity) }
+            ]
+        };
+
+        const res = await addProduction(payload);
+        if (res.success) {
+            setSuccess(`Successfully initiated production for ${quantity} units of ${selectedProduct.name}! Move to next stage in Workflow.`);
+            setSelectedProductId('');
+            setQuantity('');
+        }
     };
 
     return (
@@ -148,8 +162,8 @@ export default function Production() {
                         </thead>
                         <tbody className="divide-y divide-border">
                             {state.productionLog.map((log) => {
-                                const product = state.fabricProducts.find(p => p.id === log.fabricProductId);
-                                const fabric = state.fabrics.find(f => f.id === log.fabricId);
+                                const product = state.fabricProducts.find(p => p.id === log.fabricProductId || p._id === log.fabricProductId);
+                                const fabric = state.fabrics.find(f => f.id === log.fabricId || f._id === log.fabricId);
                                 return (
                                     <tr key={log.id} className="hover:bg-muted/30 transition-colors">
                                         <td className="px-6 py-4 text-sm font-bold">{product?.name || '—'}</td>
@@ -158,9 +172,9 @@ export default function Production() {
                                                 {fabric?.name || '—'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-sm font-bold">{log.quantity} pcs</td>
+                                        <td className="px-6 py-4 text-sm font-bold">{log.totalPieces || log.quantity} pcs</td>
                                         <td className="px-6 py-4 text-sm text-muted-foreground">{log.meterUsed} m</td>
-                                        <td className="px-6 py-4 text-sm text-muted-foreground">{log.date}</td>
+                                        <td className="px-6 py-4 text-sm text-muted-foreground">{new Date(log.createdAt || log.date).toLocaleDateString()}</td>
                                     </tr>
                                 );
                             })}

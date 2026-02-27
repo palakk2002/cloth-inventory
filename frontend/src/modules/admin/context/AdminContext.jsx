@@ -177,7 +177,11 @@ function adminReducer(state, action) {
                     pricePerMeter: f.ratePerMeter,
                     usedMeter: (f.meterPurchased || 0) - (f.meterAvailable || 0)
                 })) : state.fabrics,
-                productionLog: pbData.map(b => ({ ...b, id: b._id, fabricProductId: b.fabricId })),
+                productionLog: pbData.map(b => ({
+                    ...b,
+                    id: b._id,
+                    fabricProductId: b.productId?._id || b.productId // Match frontend's expectation for product lookup
+                })),
                 sales: sbData,
                 productionBatches: pbData,
                 storeBills: sbData,
@@ -317,7 +321,7 @@ export function AdminProvider({ children }) {
                     skuCounter: products.length + 1
                 }
             });
-            
+
             // Map dispatches to invoices and flattened format
             const rawDispatches = Array.isArray(dispatches) ? dispatches : (dispatches?.dispatches || []);
             const flattenedDispatches = rawDispatches.flatMap(d =>
@@ -386,13 +390,28 @@ export function AdminProvider({ children }) {
         }
     };
 
-    const addCategory = async (name) => {
+    const addCategory = async (categoryData) => {
         try {
-            await categoryService.create({ name });
+            await categoryService.create(categoryData);
             await fetchData();
             return true;
         } catch (err) {
             return false;
+        }
+    };
+
+    const updateCategory = async (id, categoryData) => {
+        dispatch({ type: 'SET_LOADING', payload: true });
+        try {
+            await categoryService.update(id, categoryData);
+            await fetchData();
+            return { success: true };
+        } catch (err) {
+            const msg = err.response?.data?.message || 'Failed to update category';
+            dispatch({ type: 'SET_ERROR', payload: msg });
+            return { success: false, message: msg };
+        } finally {
+            dispatch({ type: 'SET_LOADING', payload: false });
         }
     };
 
@@ -454,9 +473,11 @@ export function AdminProvider({ children }) {
                 fabricType: fabricData.name,
                 meterPurchased: fabricData.totalMeter,
                 ratePerMeter: fabricData.pricePerMeter,
-                supplierId: fabricData.supplierId || state.supplierOrders[0]?._id // Fallback or handle appropriately
+                supplierId: fabricData.supplierId,
+                invoiceNumber: fabricData.invoiceNumber
             };
             if (!backendData.supplierId) throw new Error('Supplier is required');
+            if (!backendData.invoiceNumber) throw new Error('Invoice Number is required');
 
             await fabricService.create(backendData);
             await fetchData();
@@ -490,6 +511,21 @@ export function AdminProvider({ children }) {
         }
     };
 
+    const addProduction = async (productionData) => {
+        dispatch({ type: 'SET_LOADING', payload: true });
+        try {
+            await productionService.create(productionData);
+            await fetchData();
+            return { success: true };
+        } catch (err) {
+            const msg = err.response?.data?.message || 'Failed to initiate production';
+            dispatch({ type: 'SET_ERROR', payload: msg });
+            return { success: false, message: msg };
+        } finally {
+            dispatch({ type: 'SET_LOADING', payload: false });
+        }
+    };
+
     const deleteFabric = async (id) => {
         try {
             await fabricService.delete(id);
@@ -507,6 +543,7 @@ export function AdminProvider({ children }) {
             addProduct,
             deleteProduct,
             addCategory,
+            updateCategory,
             deleteCategory,
             createSale,
             addStore,
@@ -514,6 +551,7 @@ export function AdminProvider({ children }) {
             addFabric,
             updateFabric,
             deleteFabric,
+            addProduction,
             refresh: fetchData
         }}>
             {children}
