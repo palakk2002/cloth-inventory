@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Store, User, Clock, PackageCheck, Package, Receipt, History, LogOut } from 'lucide-react';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { Store, User, Clock, Menu, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-
-const storeNavItems = [
-    { icon: PackageCheck, label: 'Receive Stock', path: '/store/receive' },
-    { icon: Package, label: 'Shop Stock', path: '/store/stock' },
-    { icon: Receipt, label: 'Billing (POS)', path: '/store/pos' },
-    { icon: History, label: 'Sales History', path: '/store/sales-history' },
-    { icon: Receipt, label: 'Invoice History', path: '/store/invoice-history' },
-];
+import StoreSidebar from './components/StoreSidebar';
 
 export default function StoreLayout() {
     const navigate = useNavigate();
@@ -18,12 +11,7 @@ export default function StoreLayout() {
     const displayShop = user?.shopName || 'Counter Staff';
     const displayInitial = displayName.charAt(0).toUpperCase();
 
-    const handleLogout = async () => {
-        if (window.confirm('Are you sure you want to log out?')) {
-            await logout();
-            navigate('/store/login');
-        }
-    };
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
@@ -39,80 +27,70 @@ export default function StoreLayout() {
         return date.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
     };
 
+    const handleLogout = async () => {
+        if (window.confirm('Are you sure you want to log out?')) {
+            await logout();
+            navigate('/store/login');
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-background font-sans flex flex-col">
-            {/* Top Header Bar */}
-            <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-[#1E3A56] px-4 lg:px-8 text-white shadow-lg">
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
-                            <Store className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <h1 className="text-lg font-bold tracking-tight leading-tight">Cloth Inventory</h1>
-                            <p className="text-[10px] uppercase tracking-widest text-white/60 font-medium">Store Module</p>
-                        </div>
-                    </div>
-                </div>
+        <div className="min-h-screen bg-background font-sans flex">
+            {/* Sidebar */}
+            <StoreSidebar isOpen={isSidebarOpen} toggle={() => setIsSidebarOpen(!isSidebarOpen)} />
 
-                <div className="flex items-center gap-6">
-                    {/* Clock */}
-                    <div className="hidden sm:flex items-center gap-2 text-white/80">
-                        <Clock className="w-4 h-4" />
-                        <div className="text-right">
-                            <p className="text-sm font-semibold leading-tight">{formatTime(currentTime)}</p>
-                            <p className="text-[10px] text-white/50">{formatDate(currentTime)}</p>
-                        </div>
-                    </div>
-
-                    {/* Staff Info */}
-                    <div className="flex items-center gap-3 pl-4 border-l border-white/20">
-                        <div className="text-right hidden sm:block">
-                            <p className="text-sm font-bold">{displayName}</p>
-                            <p className="text-[10px] text-white/60 font-medium uppercase tracking-wider">{displayShop}</p>
-                        </div>
-                        <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm">
-                            {displayInitial}
-                        </div>
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col lg:pl-64">
+                {/* Top Header Bar */}
+                <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-white/80 backdrop-blur-md px-4 lg:px-8">
+                    <div className="flex items-center gap-4">
+                        {/* Hamburger for mobile */}
                         <button
-                            onClick={handleLogout}
-                            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-                            title="Logout"
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="lg:hidden p-2 rounded-lg hover:bg-muted transition-colors"
                         >
-                            <LogOut className="w-4 h-4" />
+                            <Menu className="w-6 h-6" />
                         </button>
+
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <Store className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                                <h1 className="text-lg font-bold tracking-tight leading-tight text-slate-900">Store Panel</h1>
+                                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">{displayShop}</p>
+                            </div>
+                        </div>
                     </div>
 
+                    <div className="flex items-center gap-6">
+                        {/* Clock */}
+                        <div className="hidden sm:flex items-center gap-2 text-muted-foreground">
+                            <Clock className="w-4 h-4" />
+                            <div className="text-right">
+                                <p className="text-sm font-semibold leading-tight text-slate-700">{formatTime(currentTime)}</p>
+                                <p className="text-[10px] text-muted-foreground">{formatDate(currentTime)}</p>
+                            </div>
+                        </div>
 
-                </div>
-            </header>
+                        {/* Staff Info */}
+                        <div className="flex items-center gap-3 pl-4 border-l border-border">
+                            <div className="text-right hidden sm:block">
+                                <p className="text-sm font-bold text-slate-900">{displayName}</p>
+                                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Store Staff</p>
+                            </div>
+                            <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shadow-md shadow-primary/20">
+                                {displayInitial}
+                            </div>
+                        </div>
+                    </div>
+                </header>
 
-            {/* Navigation Tabs */}
-            <nav className="bg-white border-b border-border shadow-sm px-4 lg:px-8">
-                <div className="flex gap-1">
-                    {storeNavItems.map((item) => (
-                        <NavLink
-                            key={item.path}
-                            to={item.path}
-                            className={({ isActive }) => `
-                                flex items-center gap-2 px-5 py-3.5 text-sm font-semibold transition-all border-b-2
-                                ${isActive
-                                    ? 'border-primary text-primary'
-                                    : 'border-transparent text-muted-foreground hover:text-primary hover:border-primary/30'
-                                }
-                            `}
-                        >
-                            <item.icon className="w-4 h-4" />
-                            {item.label}
-                        </NavLink>
-                    ))}
-                </div>
-            </nav>
-
-            {/* Main Content */}
-            <main className="flex-1 p-4 lg:p-6 overflow-auto">
-                <Outlet />
-            </main>
+                {/* Main Content */}
+                <main className="flex-1 p-4 lg:p-6 overflow-auto">
+                    <Outlet />
+                </main>
+            </div>
         </div>
     );
 }

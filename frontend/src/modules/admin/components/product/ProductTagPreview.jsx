@@ -88,7 +88,7 @@ export default function ProductTagPreview({ productData }) {
                         </div>
                         <div>
                             <p className="font-bold text-slate-600 uppercase mb-0.5">Customer Care:</p>
-                            <p>Email: info.dapolorg@gmail.com</p>
+                            <p>Email: info.dapolo@gmail.com</p>
                         </div>
                     </div>
                 </div>
