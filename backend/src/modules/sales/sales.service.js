@@ -13,12 +13,12 @@ const { getIO } = require('../../config/socket');
 const generateSaleNumber = async () => {
     const year = new Date().getFullYear();
     const prefix = `INV-${year}-`;
-    
+
     const lastSale = await Sale.findOne(
         { saleNumber: new RegExp(`^${prefix}`) },
         { saleNumber: 1 }
     ).sort({ saleNumber: -1 });
-    
+
     let nextNum = 1;
     if (lastSale && lastSale.saleNumber) {
         const parts = lastSale.saleNumber.split('-');
@@ -27,7 +27,7 @@ const generateSaleNumber = async () => {
             nextNum = lastNum + 1;
         }
     }
-    
+
     return `${prefix}${nextNum.toString().padStart(5, '0')}`;
 };
 
@@ -65,9 +65,9 @@ const createSale = async (saleData, cashierId) => {
 
         // 2. Process Products and Update Inventory
         for (const item of products) {
-            const inventory = await StoreInventory.findOne({ 
-                storeId, 
-                productId: item.productId 
+            const inventory = await StoreInventory.findOne({
+                storeId,
+                productId: item.productId
             }).session(session);
 
             if (!inventory || inventory.quantityAvailable < item.quantity) {
@@ -121,20 +121,22 @@ const createSale = async (saleData, cashierId) => {
             after: sale.toObject()
         });
 
-        // 5. Real-time update (outside transaction ideally, or emit after commit)
-        try {
-            getIO().emit('new-sale', {
-                saleNumber: sale.saleNumber,
-                storeId: sale.storeId,
-                grandTotal: sale.grandTotal,
-                timestamp: sale.saleDate
-            });
-        } catch (err) {
-            console.error('Socket emit failed:', err.message);
-        }
-
         return sale;
     });
+
+    // 5. Real-time update (OUTSIDE transaction - only if commit succeeds)
+    try {
+        getIO().emit('new-sale', {
+            saleNumber: sale.saleNumber,
+            storeId: sale.storeId,
+            grandTotal: sale.grandTotal,
+            timestamp: sale.saleDate
+        });
+    } catch (err) {
+        console.error('Socket emit failed:', err.message);
+    }
+
+    return sale;
 };
 
 /**

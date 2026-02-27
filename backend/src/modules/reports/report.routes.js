@@ -15,5 +15,7 @@ router.get('/product-wise', reportController.getProductWiseSales);
 router.get('/fabric-consumption', reportController.getFabricConsumption);
 router.get('/low-stock', reportController.getLowStockReport);
 router.get('/returns', reportController.getReturnSummary);
+router.get('/stock-history', reportController.getStockHistory);
+router.get('/audit-logs', reportController.getAuditLogs);
 
 module.exports = router;

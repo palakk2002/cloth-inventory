@@ -164,9 +164,9 @@ const getFabricConsumption = async () => {
  * Low Stock Report
  */
 const getLowStockReport = async () => {
-    const factoryLow = await Product.find({ 
+    const factoryLow = await Product.find({
         $expr: { $lte: ['$factoryStock', '$minStockLevel'] },
-        isDeleted: false 
+        isDeleted: false
     }).select('name sku factoryStock minStockLevel');
 
     const storeLow = await StoreInventory.find({
@@ -192,6 +192,39 @@ const getReturnSummary = async () => {
     ]);
 };
 
+/**
+ * Stock History Report
+ */
+const getStockHistory = async (query = {}) => {
+    const { productId, type, storeId } = query;
+    const filter = {};
+    if (productId) filter.productId = productId;
+    if (type) filter.type = type;
+    if (storeId) filter.storeId = storeId;
+
+    return await require('../../models/stockHistory.model').find(filter)
+        .sort({ createdAt: -1 })
+        .populate('productId', 'name sku')
+        .populate('performedBy', 'name')
+        .limit(100);
+};
+
+/**
+ * Audit Log Report
+ */
+const getAuditLogs = async (query = {}) => {
+    const { module, action, performedBy } = query;
+    const filter = {};
+    if (module) filter.module = module;
+    if (action) filter.action = action;
+    if (performedBy) filter.performedBy = performedBy;
+
+    return await require('../../models/auditLog.model').find(filter)
+        .sort({ createdAt: -1 })
+        .populate('performedBy', 'name email')
+        .limit(100);
+};
+
 module.exports = {
     getDailySalesReport,
     getMonthlySalesReport,
@@ -199,5 +232,7 @@ module.exports = {
     getProductWiseSales,
     getFabricConsumption,
     getLowStockReport,
-    getReturnSummary
+    getReturnSummary,
+    getStockHistory,
+    getAuditLogs
 };

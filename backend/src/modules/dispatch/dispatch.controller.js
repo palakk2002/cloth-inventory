@@ -48,9 +48,9 @@ const updateStatus = async (req, res, next) => {
 
         const { status } = req.body;
         const dispatch = await dispatchService.updateStatus(req.params.id, status, req.user._id);
-        
-        const message = status === 'RECEIVED' 
-            ? 'Dispatch received: Store inventory updated' 
+
+        const message = status === 'RECEIVED'
+            ? 'Dispatch received: Store inventory updated'
             : `Dispatch status updated to ${status}`;
 
         return sendSuccess(res, { dispatch }, message);
@@ -61,8 +61,8 @@ const updateStatus = async (req, res, next) => {
 
 const deleteDispatch = async (req, res, next) => {
     try {
-        await dispatchService.deleteDispatch(req.params.id);
-        return sendSuccess(res, {}, 'Dispatch record deleted successfully');
+        await dispatchService.deleteDispatch(req.params.id, req.user._id);
+        return sendSuccess(res, {}, 'Dispatch deleted and stock restored successfully');
     } catch (err) {
         return sendError(res, err.message, 400);
     }

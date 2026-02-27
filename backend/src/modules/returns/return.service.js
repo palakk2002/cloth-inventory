@@ -12,12 +12,12 @@ const { createAuditLog } = require('../../middlewares/audit.middleware');
 const generateReturnNumber = async () => {
     const year = new Date().getFullYear();
     const prefix = `RTN-${year}-`;
-    
+
     const lastReturn = await Return.findOne(
         { returnNumber: new RegExp(`^${prefix}`) },
         { returnNumber: 1 }
     ).sort({ returnNumber: -1 });
-    
+
     let nextNum = 1;
     if (lastReturn && lastReturn.returnNumber) {
         const parts = lastReturn.returnNumber.split('-');
@@ -26,7 +26,7 @@ const generateReturnNumber = async () => {
             nextNum = lastNum + 1;
         }
     }
-    
+
     return `${prefix}${nextNum.toString().padStart(5, '0')}`;
 };
 
@@ -40,14 +40,26 @@ const processReturn = async (returnData, userId) => {
         // 1. Logic for Customer Return
         if (type === ReturnType.CUSTOMER_RETURN) {
             if (!referenceSaleId) throw new Error('Sale reference is required for customer returns');
-            
+
             const sale = await Sale.findById(referenceSaleId).session(session);
             if (!sale) throw new Error('Sale record not found');
 
             // Validate quantity returned vs quantity sold
             const soldItem = sale.products.find(p => p.productId.toString() === productId.toString());
             if (!soldItem) throw new Error('Product not found in this sale');
-            if (quantity > soldItem.quantity) throw new Error('Cannot return more than sold quantity');
+
+            // Calculate total already returned for this specific item in this sale
+            const previousReturns = await Return.find({
+                referenceSaleId,
+                productId,
+                status: { $ne: 'REJECTED' },
+                isDeleted: false
+            }).session(session);
+
+            const totalAlreadyReturned = previousReturns.reduce((sum, r) => sum + r.quantity, 0);
+            if (totalAlreadyReturned + quantity > soldItem.quantity) {
+                throw new Error(`Cannot return more than sold quantity. (Already returned: ${totalAlreadyReturned}, Sold: ${soldItem.quantity})`);
+            }
 
             // Increase Store Inventory
             await adjustStoreStock({
@@ -55,7 +67,7 @@ const processReturn = async (returnData, userId) => {
                 storeId,
                 quantityChange: quantity,
                 type: StockHistoryType.RETURN,
-                referenceId: null,
+                referenceId: null, // Will be updated later if needed, or link to return record
                 referenceModel: 'Return',
                 performedBy: userId,
                 notes: `Customer return from Sale ${sale.saleNumber}`,
@@ -65,12 +77,12 @@ const processReturn = async (returnData, userId) => {
             // Update quantitySold and quantityReturned in Store Inventory
             await StoreInventory.findOneAndUpdate(
                 { storeId, productId },
-                { 
-                    $inc: { 
+                {
+                    $inc: {
                         quantitySold: -quantity,
-                        quantityReturned: quantity,
-                        quantityAvailable: quantity // already handled by adjustStoreStock, but just to be sure we are consistent
-                    } 
+                        quantityReturned: quantity
+                        // REMOVED quantityAvailable: quantity (already handled by adjustStoreStock)
+                    }
                 },
                 { session }
             );
@@ -118,7 +130,7 @@ const processReturn = async (returnData, userId) => {
                 notes: 'Damaged stock marking',
                 session
             });
-            
+
             // We record it as a return record with type DAMAGED.
         }
 
@@ -150,11 +162,11 @@ const processReturn = async (returnData, userId) => {
 const getAllReturns = async (query) => {
     const { page = 1, limit = 10, type, storeId, productId, startDate, endDate } = query;
     const filter = { isDeleted: false };
-    
+
     if (type) filter.type = type;
     if (storeId) filter.storeId = storeId;
     if (productId) filter.productId = productId;
-    
+
     if (startDate || endDate) {
         filter.createdAt = {};
         if (startDate) filter.createdAt.$gte = new Date(startDate);

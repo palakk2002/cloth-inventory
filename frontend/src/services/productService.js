@@ -10,7 +10,7 @@ const productService = {
         return response.data.product;
     },
     update: async (id, productData) => {
-        const response = await api.put(`/products/${id}`, productData);
+        const response = await api.patch(`/products/${id}`, productData);
         return response.data;
     },
     delete: async (id) => {

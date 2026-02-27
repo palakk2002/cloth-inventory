@@ -5,12 +5,8 @@ const reportService = {
         const response = await api.get('/dashboard');
         return response.data;
     },
-    getSalesReport: async (query) => {
-        const response = await api.get('/reports/sales', { params: query });
-        return response.data;
-    },
-    getInventoryReport: async () => {
-        const response = await api.get('/reports/inventory');
+    getDailySalesReport: async (query) => {
+        const response = await api.get('/reports/daily-sales', { params: query });
         return response.data;
     }
 };

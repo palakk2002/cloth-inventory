@@ -6,18 +6,19 @@ const { withTransaction } = require('../../services/transaction.service');
 /**
  * Generate unique SKU (SKU-2025-00001)
  */
-const generateSKU = async () => {
+const generateSKU = async (session = null) => {
     const year = new Date().getFullYear();
     const prefix = `SKU-${year}-`;
 
     const lastProduct = await Product.findOne(
         { sku: new RegExp(`^${prefix}`) },
         { sku: 1 }
-    ).sort({ sku: -1 });
+    ).sort({ sku: -1 }).session(session);
 
     let nextNum = 1;
     if (lastProduct && lastProduct.sku) {
-        const lastNum = parseInt(lastProduct.sku.split('-')[2]);
+        const parts = lastProduct.sku.split('-');
+        const lastNum = parseInt(parts[parts.length - 1]);
         if (!isNaN(lastNum)) {
             nextNum = lastNum + 1;
         }
@@ -29,14 +30,14 @@ const generateSKU = async () => {
 /**
  * Generate unique numeric barcode
  */
-const generateBarcode = async () => {
+const generateBarcode = async (session = null) => {
     let unique = false;
     let barcode;
 
     while (!unique) {
         // Generate 12-digit numeric barcode
         barcode = Math.floor(100000000000 + Math.random() * 900000000000).toString();
-        const existing = await Product.findOne({ barcode });
+        const existing = await Product.findOne({ barcode }).session(session);
         if (!existing) unique = true;
     }
 
@@ -48,10 +49,11 @@ const generateBarcode = async () => {
  */
 const createProductsFromBatch = async (batch, metadata, session) => {
     const { name, category, brand, costPrice, salePrice } = metadata;
+    const createdProducts = [];
 
-    const creations = batch.sizeBreakdown.map(async (item) => {
-        const sku = await generateSKU();
-        const barcode = await generateBarcode();
+    for (const item of batch.sizeBreakdown) {
+        const sku = await generateSKU(session);
+        const barcode = await generateBarcode(session);
 
         const product = new Product({
             name,
@@ -84,10 +86,10 @@ const createProductsFromBatch = async (batch, metadata, session) => {
             performedBy: batch.createdBy
         }], { session });
 
-        return product;
-    });
+        createdProducts.push(product);
+    }
 
-    return await Promise.all(creations);
+    return createdProducts;
 };
 
 /**
@@ -186,8 +188,8 @@ const deleteProduct = async (id) => {
  */
 const createProduct = async (productData, userId) => {
     return await withTransaction(async (session) => {
-        if (!productData.sku) productData.sku = await generateSKU();
-        if (!productData.barcode) productData.barcode = await generateBarcode();
+        if (!productData.sku) productData.sku = await generateSKU(session);
+        if (!productData.barcode) productData.barcode = await generateBarcode(session);
 
         const product = new Product({
             ...productData,

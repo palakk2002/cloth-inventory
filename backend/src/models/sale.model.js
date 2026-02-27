@@ -85,6 +85,7 @@ const saleSchema = new mongoose.Schema(
 // Indexes
 // saleSchema.index({ saleNumber: 1 }); // unique: true handles this
 saleSchema.index({ storeId: 1 });
+saleSchema.index({ cashierId: 1 });
 saleSchema.index({ saleDate: -1 });
 
 module.exports = mongoose.model('Sale', saleSchema);

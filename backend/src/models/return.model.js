@@ -59,5 +59,7 @@ const returnSchema = new mongoose.Schema(
 returnSchema.index({ type: 1 });
 returnSchema.index({ storeId: 1 });
 returnSchema.index({ productId: 1 });
+returnSchema.index({ referenceSaleId: 1 });
+returnSchema.index({ isDeleted: 1 });
 
 module.exports = mongoose.model('Return', returnSchema);

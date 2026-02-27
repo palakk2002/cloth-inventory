@@ -10,7 +10,7 @@ const supplierService = {
         return response.data;
     },
     update: async (id, supplierData) => {
-        const response = await api.put(`/suppliers/${id}`, supplierData);
+        const response = await api.patch(`/suppliers/${id}`, supplierData);
         return response.data;
     },
     delete: async (id) => {

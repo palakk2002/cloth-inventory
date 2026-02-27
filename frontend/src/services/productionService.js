@@ -9,12 +9,8 @@ const productionService = {
         const response = await api.post('/production', batchData);
         return response.data;
     },
-    moveStatus: async (batchId, nextStatus) => {
-        const response = await api.put(`/production/${batchId}/status`, { nextStatus });
-        return response.data;
-    },
-    complete: async (batchId, completionData) => {
-        const response = await api.post(`/production/${batchId}/complete`, completionData);
+    moveStage: async (batchId, nextStage) => {
+        const response = await api.patch(`/production/${batchId}/stage`, { stage: nextStage });
         return response.data;
     }
 };

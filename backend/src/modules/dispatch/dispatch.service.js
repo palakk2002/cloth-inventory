@@ -12,12 +12,12 @@ const { createAuditLog } = require('../../middlewares/audit.middleware');
 const generateDispatchNumber = async () => {
     const year = new Date().getFullYear();
     const prefix = `DSP-${year}-`;
-    
+
     const lastDispatch = await Dispatch.findOne(
         { dispatchNumber: new RegExp(`^${prefix}`) },
         { dispatchNumber: 1 }
     ).sort({ dispatchNumber: -1 });
-    
+
     let nextNum = 1;
     if (lastDispatch && lastDispatch.dispatchNumber) {
         const parts = lastDispatch.dispatchNumber.split('-');
@@ -26,7 +26,7 @@ const generateDispatchNumber = async () => {
             nextNum = lastNum + 1;
         }
     }
-    
+
     return `${prefix}${nextNum.toString().padStart(5, '0')}`;
 };
 
@@ -148,7 +148,7 @@ const updateStatus = async (id, status, userId) => {
  */
 const getAllDispatches = async (query) => {
     const { page = 1, limit = 10, storeId, status, startDate, endDate } = query;
-    
+
     const filter = { isDeleted: false };
     if (storeId) filter.storeId = storeId;
     if (status) filter.status = status;
@@ -164,7 +164,7 @@ const getAllDispatches = async (query) => {
     }
 
     const skip = (page - 1) * limit;
-    
+
     const [dispatches, total] = await Promise.all([
         Dispatch.find(filter)
             .sort({ dispatchDate: -1 })
@@ -188,14 +188,59 @@ const getDispatchById = async (id) => {
     return dispatch;
 };
 
-const deleteDispatch = async (id) => {
-    const dispatch = await Dispatch.findOneAndUpdate(
-        { _id: id, isDeleted: false },
-        { $set: { isDeleted: true } },
-        { new: true }
-    );
-    if (!dispatch) throw new Error('Dispatch not found');
-    return dispatch;
+const deleteDispatch = async (id, userId) => {
+    return await withTransaction(async (session) => {
+        const dispatch = await Dispatch.findOne({ _id: id, isDeleted: false }).session(session);
+        if (!dispatch) throw new Error('Dispatch not found');
+
+        // 1. Restore Factory Stock (always needed since stock decreases on creation)
+        for (const item of dispatch.products) {
+            await adjustStock({
+                productId: item.productId,
+                quantityChange: item.quantity,
+                type: StockHistoryType.ADJUSTMENT,
+                referenceId: dispatch._id,
+                referenceModel: 'Dispatch',
+                performedBy: userId,
+                notes: `System: Stock restored due to dispatch ${dispatch.dispatchNumber} deletion`,
+                session
+            });
+        }
+
+        // 2. If it was already RECEIVED, reduce Store Stock as well
+        if (dispatch.status === DispatchStatus.RECEIVED) {
+            for (const item of dispatch.products) {
+                await adjustStoreStock({
+                    productId: item.productId,
+                    storeId: dispatch.storeId,
+                    quantityChange: -item.quantity,
+                    type: StockHistoryType.ADJUSTMENT,
+                    referenceId: dispatch._id,
+                    referenceModel: 'Dispatch',
+                    performedBy: userId,
+                    notes: `System: Store stock reduced due to dispatch ${dispatch.dispatchNumber} deletion`,
+                    session
+                });
+            }
+        }
+
+        // 3. Mark as deleted
+        dispatch.isDeleted = true;
+        await dispatch.save({ session });
+
+        // 4. Audit Log
+        await createAuditLog({
+            performedBy: userId,
+            action: 'DELETE_DISPATCH',
+            module: 'DISPATCH',
+            targetId: dispatch._id,
+            targetModel: 'Dispatch',
+            before: { isDeleted: false },
+            after: { isDeleted: true }
+        });
+
+        return dispatch;
+    });
 };
 
 module.exports = {

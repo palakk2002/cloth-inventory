@@ -70,6 +70,24 @@ const getReturnSummary = async (req, res, next) => {
     }
 };
 
+const getStockHistory = async (req, res, next) => {
+    try {
+        const history = await reportService.getStockHistory(req.query);
+        return sendSuccess(res, { history }, 'Stock history retrieved successfully');
+    } catch (err) {
+        next(err);
+    }
+};
+
+const getAuditLogs = async (req, res, next) => {
+    try {
+        const logs = await reportService.getAuditLogs(req.query);
+        return sendSuccess(res, { logs }, 'Audit logs retrieved successfully');
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     getDailySales,
     getMonthlySales,
@@ -77,5 +95,7 @@ module.exports = {
     getProductWiseSales,
     getFabricConsumption,
     getLowStockReport,
-    getReturnSummary
+    getReturnSummary,
+    getStockHistory,
+    getAuditLogs
 };

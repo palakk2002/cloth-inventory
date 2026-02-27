@@ -9,8 +9,8 @@ const dispatchService = {
         const response = await api.post('/dispatch', dispatchData);
         return response.data;
     },
-    receive: async (dispatchId, receiveData) => {
-        const response = await api.put(`/dispatch/${dispatchId}/receive`, receiveData);
+    receive: async (dispatchId) => {
+        const response = await api.patch(`/dispatch/${dispatchId}/status`, { status: 'RECEIVED' });
         return response.data;
     }
 };

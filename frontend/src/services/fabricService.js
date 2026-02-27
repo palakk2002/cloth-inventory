@@ -10,7 +10,7 @@ const fabricService = {
         return response.data;
     },
     update: async (id, fabricData) => {
-        const response = await api.put(`/fabrics/${id}`, fabricData);
+        const response = await api.patch(`/fabrics/${id}`, fabricData);
         return response.data;
     },
     delete: async (id) => {

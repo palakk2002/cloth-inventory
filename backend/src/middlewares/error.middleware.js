@@ -1,8 +1,14 @@
 const logger = require('../config/logger');
 const fs = require('fs');
+const path = require('path');
 
 const errorHandler = (err, req, res, next) => {
-    fs.appendFileSync('c:/Users/palak/OneDrive/Desktop/cloth-inventory/backend/temp_err.log', new Date().toISOString() + ' ' + err.message + '\n' + err.stack + '\n\n');
+    try {
+        const logPath = path.join(__dirname, '..', '..', 'temp_err.log');
+        fs.appendFileSync(logPath, new Date().toISOString() + ' ' + err.message + '\n' + err.stack + '\n\n');
+    } catch (logErr) {
+        console.error('Failed to write to temp log:', logErr.message);
+    }
     logger.error(err.message, { stack: err.stack, url: req.originalUrl });
 
     // Mongoose duplicate key error
